@@ -12,6 +12,7 @@ set(PROCESSING_SOURCES
     imageformat_handler.cpp
     scandata_processor.cpp
     multithreaded_processor.cpp
+    memory_optimized_processor.cpp
 )
 
 # 头文件列表
@@ -19,9 +20,8 @@ set(PROCESSING_HEADERS
     dscannerimageprocessor_p.h
     advanced_image_processor.h
     simd_image_algorithms.h
-    imageformat_handler.h
-    scandata_processor.h
     multithreaded_processor.h
+    memory_optimized_processor.h
 )
 
 # 创建处理模块库

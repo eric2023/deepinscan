@@ -92,6 +92,24 @@ public:
      * @return List of supported device models
      */
     virtual QStringList supportedModels() const = 0;
+    
+    /**
+     * @brief Get supported devices list
+     * @return List of supported device names
+     */
+    virtual QStringList supportedDevices() const = 0;
+    
+    // Driver Lifecycle
+    /**
+     * @brief Initialize the driver
+     * @return true if initialization successful, false otherwise
+     */
+    virtual bool initialize() = 0;
+    
+    /**
+     * @brief Shutdown the driver
+     */
+    virtual void shutdown() = 0;
 
     // Device Detection
     /**
@@ -100,6 +118,12 @@ public:
      * @return true if device is supported, false otherwise
      */
     virtual bool detectDevice(const USBDeviceInfo &usbInfo) const = 0;
+    
+    /**
+     * @brief Discover available devices
+     * @return List of discovered devices
+     */
+    virtual QList<DeviceInfo> discoverDevices() = 0;
     
     /**
      * @brief Detect if the driver supports a device by name
@@ -120,6 +144,13 @@ public:
      * @return List of discovered devices
      */
     virtual QList<DeviceInfo> discoverDevices() const = 0;
+    
+    /**
+     * @brief Check if device is supported by this driver
+     * @param deviceInfo Device information
+     * @return true if device is supported, false otherwise
+     */
+    virtual bool isDeviceSupported(const DeviceInfo &deviceInfo) = 0;
 
     // Device Management
     /**
@@ -130,15 +161,33 @@ public:
     virtual bool openDevice(const QString &deviceName) = 0;
     
     /**
+     * @brief Connect to a device using device info
+     * @param deviceInfo Device information
+     * @return true if connection successful, false otherwise
+     */
+    virtual bool connectDevice(const DeviceInfo &deviceInfo) = 0;
+    
+    /**
      * @brief Close the current device
      */
     virtual void closeDevice() = 0;
+    
+    /**
+     * @brief Disconnect from the current device
+     */
+    virtual void disconnectDevice() = 0;
     
     /**
      * @brief Check if a device is currently open
      * @return true if device is open, false otherwise
      */
     virtual bool isDeviceOpen() const = 0;
+    
+    /**
+     * @brief Check if connected to a device
+     * @return true if connected, false otherwise
+     */
+    virtual bool isConnected() const = 0;
     
     /**
      * @brief Get the current device name
@@ -158,6 +207,45 @@ public:
      * @return Scanner capabilities structure
      */
     virtual ScannerCapabilities getCapabilities() const = 0;
+    
+    /**
+     * @brief Get current scan parameters
+     * @return Current scan parameters
+     */
+    virtual ScanParameters getScanParameters() const = 0;
+    
+    /**
+     * @brief Get current device information
+     * @return Device information structure
+     */
+    virtual DeviceInfo getCurrentDeviceInfo() const = 0;
+    
+    /**
+     * @brief Get device capabilities as variant map
+     * @return Device capabilities map
+     */
+    virtual QVariantMap getDeviceCapabilities() const = 0;
+    
+    /**
+     * @brief Get supported options list
+     * @return List of supported option names
+     */
+    virtual QStringList getSupportedOptions() const = 0;
+    
+    /**
+     * @brief Get option value
+     * @param option Option name
+     * @return Option value
+     */
+    virtual QVariant getOptionValue(const QString &option) const = 0;
+    
+    /**
+     * @brief Set option value
+     * @param option Option name
+     * @param value Option value
+     * @return true if successful, false otherwise
+     */
+    virtual bool setOptionValue(const QString &option, const QVariant &value) = 0;
     
     /**
      * @brief Get device status
@@ -180,21 +268,50 @@ public:
     virtual bool setScanParameters(const ScanParameters &params) = 0;
     
     /**
-     * @brief Get current scan parameters
-     * @return Current scan parameters
-     */
-    virtual ScanParameters getScanParameters() const = 0;
-    
-    /**
      * @brief Start scanning operation
      * @return true if scan started successfully, false otherwise
      */
     virtual bool startScan() = 0;
     
     /**
+     * @brief Start scanning operation with parameters
+     * @param params Scan parameters
+     * @return true if scan started successfully, false otherwise
+     */
+    virtual bool startScan(const ScanParameters &params) = 0;
+    
+    /**
+     * @brief Cancel current scanning operation
+     */
+    virtual void cancelScan() = 0;
+    
+    /**
+     * @brief Read scan data
+     * @return Scan data buffer
+     */
+    virtual QByteArray readScanData() = 0;
+    
+    /**
+     * @brief Cleanup driver resources
+     */
+    virtual void cleanup() = 0;
+    
+    /**
      * @brief Stop scanning operation
      */
     virtual void stopScan() = 0;
+    
+    /**
+     * @brief Pause scanning operation
+     * @return true if pause successful, false otherwise
+     */
+    virtual bool pauseScan() = 0;
+    
+    /**
+     * @brief Resume scanning operation
+     * @return true if resume successful, false otherwise
+     */
+    virtual bool resumeScan() = 0;
     
     /**
      * @brief Get scan progress
@@ -207,6 +324,12 @@ public:
      * @return true if scanning, false otherwise
      */
     virtual bool isScanning() const = 0;
+    
+    /**
+     * @brief Check if scan is complete
+     * @return true if scan completed, false otherwise
+     */
+    virtual bool isScanComplete() const = 0;
     
     /**
      * @brief Get scanned image data
@@ -233,6 +356,12 @@ public:
     virtual QImage getPreviewData();
     
     /**
+     * @brief Get preview image (alias for getPreviewData)
+     * @return Preview image, or null image if no preview available
+     */
+    virtual QImage getPreview() = 0;
+    
+    /**
      * @brief Check if preview is available
      * @return true if preview is supported, false otherwise
      */
@@ -243,7 +372,7 @@ public:
      * @brief Calibrate the device
      * @return true if calibration successful, false otherwise
      */
-    virtual bool calibrateDevice();
+    virtual bool calibrateDevice() = 0;
     
     /**
      * @brief Check if calibration is supported
@@ -264,20 +393,26 @@ public:
      * @param value Parameter value
      * @return true if parameter set successfully, false otherwise
      */
-    virtual bool setParameter(const QString &name, const QVariant &value);
+    virtual bool setParameter(const QString &name, const QVariant &value) = 0;
     
     /**
      * @brief Get a device parameter
      * @param name Parameter name
      * @return Parameter value, or invalid QVariant if not found
      */
-    virtual QVariant getParameter(const QString &name) const;
+    virtual QVariant getParameter(const QString &name) const = 0;
     
     /**
      * @brief Get all available parameters
      * @return Map of parameter names to values
      */
     virtual QVariantMap getParameters() const;
+    
+    /**
+     * @brief Get parameter names list
+     * @return List of available parameter names
+     */
+    virtual QStringList getParameterNames() const = 0;
     
     /**
      * @brief Get parameter constraints
@@ -291,7 +426,7 @@ public:
      * @brief Get the last error message
      * @return Error message string
      */
-    QString lastError() const;
+    virtual QString lastError() const = 0;
     
     /**
      * @brief Clear the last error
@@ -333,6 +468,22 @@ signals:
      * @param error Error message
      */
     void errorOccurred(const QString &error);
+    
+    /**
+     * @brief Emitted when a device is discovered
+     * @param deviceInfo Discovered device information
+     */
+    void deviceDiscovered(const DeviceInfo &deviceInfo);
+    
+    /**
+     * @brief Emitted when scan starts
+     */
+    void scanStarted();
+    
+    /**
+     * @brief Emitted when scan stops
+     */
+    void scanStopped();
 
 protected:
     /**

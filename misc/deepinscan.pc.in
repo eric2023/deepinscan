@@ -1,0 +1,11 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: DeepinScan
+Description: Professional scanner application for Deepin Linux
+Version: @PROJECT_VERSION@
+Requires: Qt5Core Qt5Widgets Qt5Network Qt5Xml dtkwidget
+Libs: -L${libdir} -ldeepinscan
+Cflags: -I${includedir} 

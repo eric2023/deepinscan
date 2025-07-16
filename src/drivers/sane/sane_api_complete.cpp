@@ -1,6 +1,10 @@
 // SPDX-FileCopyrightText: 2024-2025 eric2023
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+// 预定义SANE版本码宏
+#define SANE_VERSION_CODE(major, minor, patch) \
+    (((major) << 24) | ((minor) << 16) | (patch))
+
 #include "dscannersane_p.h"
 #include "sane_api_complete.h"
 #include "Scanner/DScannerDevice.h"
@@ -31,7 +35,7 @@ static const QMap<SANEStatus, int> g_saneStatusMap = {
     {SANEStatus::Cancelled, 2},               // SANE_STATUS_CANCELLED
     {SANEStatus::DeviceBusy, 3},              // SANE_STATUS_DEVICE_BUSY
     {SANEStatus::Invalid, 4},                 // SANE_STATUS_INVAL
-    {SANEStatus::EOF_Status, 5},              // SANE_STATUS_EOF
+    {SANEStatus::EOF_, 5},              // SANE_STATUS_EOF
     {SANEStatus::Jammed, 6},                  // SANE_STATUS_JAMMED
     {SANEStatus::NoDocs, 7},                  // SANE_STATUS_NO_DOCS
     {SANEStatus::CoverOpen, 8},               // SANE_STATUS_COVER_OPEN
@@ -441,7 +445,7 @@ int SANEAPIManager::sane_read_impl(void *handle, unsigned char *data, int max_le
         // 扫描完成
         deviceHandle->scanInProgress = false;
         qCInfo(dscannerSANEComplete) << "Scan completed";
-        return g_saneStatusMap[SANEStatus::EOF_Status];
+        return g_saneStatusMap[SANEStatus::EOF_];
     }
     
     *length = bytesRead;
@@ -575,8 +579,4 @@ void SANEAPIManager::loadBuiltinDeviceDatabase()
     qCInfo(dscannerSANEComplete) << "Loaded" << m_deviceDatabase.size() << "device entries";
 }
 
-// 预定义SANE版本码宏
-#define SANE_VERSION_CODE(major, minor, patch) \
-    (((major) << 24) | ((minor) << 16) | (patch))
-
-#include "sane_api_complete.moc" 
+// #include "sane_api_complete.moc" 

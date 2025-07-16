@@ -2761,4 +2761,4 @@ QFuture<QList<QImage>> AdvancedImageProcessor::processBatchSIMD(const QList<QIma
 
 DSCANNER_END_NAMESPACE
 
-#include "advanced_image_processor.moc" 
+// #include "advanced_image_processor.moc" 

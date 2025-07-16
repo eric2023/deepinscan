@@ -16,6 +16,10 @@
 
 DSCANNER_BEGIN_NAMESPACE
 
+// 前向声明
+class DScannerSANEPrivate;
+class DScannerSANEDriverPrivate;
+
 // SANE常量定义
 enum class SANEStatus {
     Good = 0,               ///< 操作成功
@@ -259,7 +263,6 @@ signals:
     void errorOccurred(SANEStatus status, const QString &message);
 
 private:
-    class DScannerSANEPrivate;
     DScannerSANEPrivate *d_ptr;
     Q_DECLARE_PRIVATE(DScannerSANE)
     Q_DISABLE_COPY(DScannerSANE)
@@ -295,12 +298,16 @@ public:
     void closeDevice() override;
     bool isDeviceOpen() const override;
 
-    ScannerCapabilities getCapabilities() override;
+    ScannerCapabilities getCapabilities() const override;
     bool setScanParameters(const ScanParameters &params) override;
-    ScanParameters getScanParameters() override;
+    ScanParameters getScanParameters() const override;
 
     bool startScan() override;
+    bool startScan(const ScanParameters &params) override;
     void stopScan() override;
+    void cancelScan() override;
+    QByteArray readScanData() override;
+    void cleanup() override;
     bool pauseScan() override;
     bool resumeScan() override;
 
@@ -319,7 +326,6 @@ private slots:
     void onSANEErrorOccurred(SANEStatus status, const QString &message);
 
 private:
-    class DScannerSANEDriverPrivate;
     DScannerSANEDriverPrivate *d_ptr;
     Q_DECLARE_PRIVATE(DScannerSANEDriver)
     Q_DISABLE_COPY(DScannerSANEDriver)

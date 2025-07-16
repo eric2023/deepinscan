@@ -585,4 +585,4 @@ void DScannerGenesysDriver::onUSBError(const QString &error)
     emit errorOccurred(d->lastError);
 }
 
-#include "dscannergenesys.moc" 
+// #include "dscannergenesys.moc" 

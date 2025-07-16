@@ -6,6 +6,7 @@
 
 #include "Scanner/DScannerTypes.h"
 #include "Scanner/DScannerGlobal.h"
+#include "Scanner/DScannerSANE.h"
 
 #include <QObject>
 #include <QMutex>
@@ -40,20 +41,7 @@ struct SANEDeviceInfo {
     SANEDeviceInfo() : vendorId(0), productId(0), chipset(ChipsetType::Unknown), driverType(DriverType::Generic) {}
 };
 
-/**
- * @brief SANE选项描述符
- */
-struct SANEOptionDescriptor {
-    QString name;           // 选项名称
-    QString title;          // 标题
-    QString description;    // 描述
-    SANEValueType type;     // 值类型
-    SANEUnit unit;          // 单位
-    int size;               // 大小
-    int cap;                // 能力标志
-    SANEConstraintType constraintType;  // 约束类型
-    QVariant constraint;    // 约束值
-};
+// SANEOptionDescriptor 已在 DScannerSANE.h 中定义
 
 /**
  * @brief SANE选项数据
@@ -98,26 +86,7 @@ public:
     }
 };
 
-/**
- * @brief SANE扫描参数
- */
-struct SANEParameters {
-    SANEFrame format;       // 帧格式
-    bool lastFrame;         // 是否最后一帧
-    int bytesPerLine;       // 每行字节数
-    int pixelsPerLine;      // 每行像素数
-    int lines;              // 行数
-    int depth;              // 位深度
-    
-    SANEParameters() 
-        : format(SANEFrame::Gray)
-        , lastFrame(true)
-        , bytesPerLine(0)
-        , pixelsPerLine(0)
-        , lines(0)
-        , depth(8)
-    {}
-};
+// SANEParameters 已在 DScannerSANE.h 中定义
 
 /**
  * @brief SANE API完整管理器

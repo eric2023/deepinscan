@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "DScannerImageProcessor.h"
+#include "Scanner/DScannerImageProcessor.h"
 #include "dscannerimageprocessor_p.h"
 #include "simd_image_algorithms.h"
 #include "memory_optimized_processor.h"
@@ -415,4 +415,4 @@ double DScannerImageProcessor::averageProcessingTime() const
 
 DSCANNER_END_NAMESPACE
 
-#include "moc_DScannerImageProcessor.cpp" 
+// #include "moc_DScannerImageProcessor.cpp" 

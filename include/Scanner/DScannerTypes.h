@@ -63,6 +63,33 @@ enum class DriverType {
 };
 
 /**
+ * @brief Chipset type enumeration
+ */
+enum class ChipsetType {
+    Unknown,        ///< Unknown chipset
+    GL646,          ///< Genesys GL646
+    GL843,          ///< Genesys GL843
+    GL846,          ///< Genesys GL846
+    GL847,          ///< Genesys GL847
+    CanoScan,       ///< Canon CanoScan series
+    Epson_ES,       ///< Epson Expression series
+    Generic_USB     ///< Generic USB chipset
+};
+
+/**
+ * @brief Scan mode enumeration
+ */
+enum class ScanMode {
+    Preview,        ///< Preview scan mode
+    Document,       ///< Document scan mode
+    Photo,          ///< Photo scan mode
+    Film,           ///< Film scan mode
+    Transparency,   ///< Transparency scan mode
+    Batch,          ///< Batch scan mode
+    Custom          ///< Custom scan mode
+};
+
+/**
  * @brief Scan area structure (in millimeters)
  */
 struct ScanArea {

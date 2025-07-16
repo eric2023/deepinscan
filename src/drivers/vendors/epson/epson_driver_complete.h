@@ -13,6 +13,8 @@
 #include <QLoggingCategory>
 #include <QMap>
 #include <QVariantMap>
+#include <QTcpSocket>
+#include <QNetworkAccessManager>
 #include <libusb-1.0/libusb.h>
 
 DSCANNER_BEGIN_NAMESPACE
@@ -76,20 +78,20 @@ public:
     // 基本设备操作
     bool initialize() override;
     void cleanup() override;
-    bool isDeviceSupported(const DScannerDeviceInfo &deviceInfo) override;
-    bool connectDevice(const DScannerDeviceInfo &deviceInfo) override;
+    bool isDeviceSupported(const DeviceInfo &deviceInfo) override;
+    bool connectDevice(const DeviceInfo &deviceInfo) override;
     void disconnectDevice() override;
     bool isConnected() const override;
 
     // 设备信息和能力
-    DScannerDeviceInfo getCurrentDeviceInfo() const override;
+    DeviceInfo getCurrentDeviceInfo() const override;
     QVariantMap getDeviceCapabilities() const override;
     QStringList getSupportedOptions() const override;
     QVariant getOptionValue(const QString &option) const override;
     bool setOptionValue(const QString &option, const QVariant &value) override;
 
     // 扫描操作
-    bool startScan(const DScannerScanParameters &params) override;
+    bool startScan(const ScanParameters &params) override;
     void cancelScan() override;
     QByteArray readScanData() override;
     bool isScanComplete() const override;
@@ -101,7 +103,7 @@ public:
      * @param deviceInfo 设备信息
      * @return Epson设备系列
      */
-    EpsonSeries detectEpsonSeries(const DScannerDeviceInfo &deviceInfo) const;
+    EpsonSeries detectEpsonSeries(const DeviceInfo &deviceInfo) const;
 
     /**
      * @brief 获取Epson设备能力
@@ -182,7 +184,7 @@ private:
      * @param deviceInfo 设备信息
      * @return 是否成功识别
      */
-    bool identifyEpsonDevice(const DScannerDeviceInfo &deviceInfo);
+    bool identifyEpsonDevice(const DeviceInfo &deviceInfo);
 
     /**
      * @brief 建立Epson USB连接
@@ -213,7 +215,7 @@ private:
      * @param params 扫描参数
      * @return 是否成功
      */
-    bool configureEpsonScanParameters(const DScannerScanParameters &params);
+    bool configureEpsonScanParameters(const ScanParameters &params);
 
     /**
      * @brief 启动Epson扫描过程
@@ -280,7 +282,7 @@ private:
 
 private:
     // 设备连接信息
-    DScannerDeviceInfo m_currentDevice;
+    DeviceInfo m_currentDevice;
     EpsonSeries m_deviceSeries;
     EpsonProtocol m_protocol;
     bool m_isConnected;

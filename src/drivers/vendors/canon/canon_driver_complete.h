@@ -13,6 +13,8 @@
 #include <QLoggingCategory>
 #include <QMap>
 #include <QVariantMap>
+#include <QTcpSocket>
+#include <QNetworkAccessManager>
 #include <libusb-1.0/libusb.h>
 
 DSCANNER_BEGIN_NAMESPACE
@@ -74,20 +76,20 @@ public:
     // 基本设备操作
     bool initialize() override;
     void cleanup() override;
-    bool isDeviceSupported(const DScannerDeviceInfo &deviceInfo) override;
-    bool connectDevice(const DScannerDeviceInfo &deviceInfo) override;
+    bool isDeviceSupported(const DeviceInfo &deviceInfo) override;
+    bool connectDevice(const DeviceInfo &deviceInfo) override;
     void disconnectDevice() override;
     bool isConnected() const override;
 
     // 设备信息和能力
-    DScannerDeviceInfo getCurrentDeviceInfo() const override;
+    DeviceInfo getCurrentDeviceInfo() const override;
     QVariantMap getDeviceCapabilities() const override;
     QStringList getSupportedOptions() const override;
     QVariant getOptionValue(const QString &option) const override;
     bool setOptionValue(const QString &option, const QVariant &value) override;
 
     // 扫描操作
-    bool startScan(const DScannerScanParameters &params) override;
+    bool startScan(const ScanParameters &params) override;
     void cancelScan() override;
     QByteArray readScanData() override;
     bool isScanComplete() const override;
@@ -99,7 +101,7 @@ public:
      * @param deviceInfo 设备信息
      * @return Canon设备系列
      */
-    CanonSeries detectCanonSeries(const DScannerDeviceInfo &deviceInfo) const;
+    CanonSeries detectCanonSeries(const DeviceInfo &deviceInfo) const;
 
     /**
      * @brief 获取Canon设备能力
@@ -159,7 +161,7 @@ private:
      * @param deviceInfo 设备信息
      * @return 是否成功识别
      */
-    bool identifyCanonDevice(const DScannerDeviceInfo &deviceInfo);
+    bool identifyCanonDevice(const DeviceInfo &deviceInfo);
 
     /**
      * @brief 建立Canon USB连接
@@ -190,7 +192,7 @@ private:
      * @param params 扫描参数
      * @return 是否成功
      */
-    bool configureCanonScanParameters(const DScannerScanParameters &params);
+    bool configureCanonScanParameters(const ScanParameters &params);
 
     /**
      * @brief 启动Canon扫描过程
@@ -242,7 +244,7 @@ private:
 
 private:
     // 设备连接信息
-    DScannerDeviceInfo m_currentDevice;
+    DeviceInfo m_currentDevice;
     CanonSeries m_deviceSeries;
     CanonProtocol m_protocol;
     bool m_isConnected;

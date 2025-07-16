@@ -603,4 +603,4 @@ ScannerCapabilities GenesysDriverComplete::getGL843Capabilities() const
     return caps;
 }
 
-#include "genesys_driver_complete.moc" 
+// #include "genesys_driver_complete.moc" 

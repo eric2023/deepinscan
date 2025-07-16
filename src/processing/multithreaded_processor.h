@@ -29,6 +29,28 @@
 #include <QtConcurrent>
 #include <functional>
 
+// 前向声明
+class MultithreadedProcessor;
+
+/**
+ * @brief 线程工作器类
+ */
+class ThreadWorker : public QObject
+{
+    Q_OBJECT
+public:
+    explicit ThreadWorker(int workerId, MultithreadedProcessor *processor);
+    void setThreadAffinity(int cpuCore);
+    
+public slots:
+    void processTask();
+    
+private:
+    int m_workerId;
+    MultithreadedProcessor *m_processor;
+    int m_assignedCore;
+};
+
 /**
  * @brief MultithreadedProcessor 多线程优化的图像处理器
  * 
@@ -329,24 +351,7 @@ private:
         }
     };
     
-    /**
-     * @brief 线程工作器类
-     */
-    class ThreadWorker : public QObject
-    {
-        Q_OBJECT
-    public:
-        explicit ThreadWorker(int workerId, MultithreadedProcessor *processor);
-        void setThreadAffinity(int cpuCore);
-        
-    public slots:
-        void processTask();
-        
-    private:
-        int m_workerId;
-        MultithreadedProcessor *m_processor;
-        int m_assignedCore;
-    };
+    // ThreadWorker 现在已移至类外定义
 
 private slots:
     /**
@@ -445,4 +450,4 @@ private:
     QList<qint64> m_threadTimes;                      ///< 线程处理时间
 };
 
-#include "multithreaded_processor.moc" 
+// #include "multithreaded_processor.moc" 
