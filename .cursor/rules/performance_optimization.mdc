@@ -1,0 +1,111 @@
+# 扫描仪性能优化核心原则
+
+## 图像处理优化
+
+### 1. 内存管理
+```cpp
+// ✅ 大图像分块处理
+static constexpr size_t MAX_MEMORY_USAGE = 512 * 1024 * 1024; // 512MB
+
+// ✅ 预估内存需求
+size_t estimatedMemory = width * height * 4; // RGBA
+if (estimatedMemory > MAX_MEMORY_USAGE) {
+    return processByTiles(image);
+}
+```
+
+### 2. SIMD优化
+```cpp
+// ✅ 使用AVX2加速图像处理
+#include <immintrin.h>
+
+// 检测CPU特性
+static bool isAVX2Supported() {
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 7);
+    return (cpuInfo[1] & (1 << 5)) != 0;
+}
+```
+
+### 3. 并行处理
+```cpp
+// ✅ 使用QtConcurrent并行处理
+#include <QtConcurrent/QtConcurrent>
+
+auto future = QtConcurrent::mapped(images, [&](const QImage& img) {
+    return processImage(img, params);
+});
+```
+
+## 设备通信优化
+
+### 1. 异步操作
+```cpp
+// ✅ 异步设备操作，避免阻塞UI
+QFuture<QImage> scanAsync(const QString& deviceId) {
+    return QtConcurrent::run(m_devicePool, [=]() {
+        return performScan(deviceId);
+    });
+}
+```
+
+### 2. 连接池
+```cpp
+// ✅ 设备连接复用
+class DeviceConnectionPool {
+    QHash<QString, std::unique_ptr<DScannerDevice>> m_connections;
+    static constexpr int MAX_IDLE_TIME = 300000; // 5分钟
+};
+```
+
+### 3. 预览缓存
+```cpp
+// ✅ 智能预览缓存
+class PreviewCache {
+    QHash<QString, QImage> m_cache;
+    static constexpr qint64 MAX_CACHE_SIZE = 100 * 1024 * 1024; // 100MB
+};
+```
+
+## UI性能优化
+
+### 1. 图像显示
+```cpp
+// ✅ 缩放级别缓存
+QHash<double, QPixmap> m_scaleCache;
+static constexpr int MAX_CACHED_SCALES = 5;
+
+// ✅ 大图像设备像素比优化
+if (image.sizeInBytes() > 50 * 1024 * 1024) {
+    pixmap = QPixmap::fromImage(image.scaled(size / devicePixelRatio()));
+    pixmap.setDevicePixelRatio(devicePixelRatio());
+}
+```
+
+### 2. 批量更新
+```cpp
+// ✅ 信号批量发送，减少UI更新频率
+QTimer* m_updateTimer;
+QSet<QString> m_changedDevices;
+
+void deviceChanged(const QString& deviceId) {
+    m_changedDevices.insert(deviceId);
+    m_updateTimer->start(100); // 延迟100ms批量发送
+}
+```
+
+## 关键性能指标
+
+### 目标性能
+- **设备检测**: < 3秒
+- **扫描启动**: < 2秒  
+- **内存使用**: < 100MB
+- **CPU使用率**: < 30%
+
+### 优化检查点
+- 使用智能指针避免内存泄漏
+- 大图像分块处理
+- 多线程并行计算
+- UI操作在主线程
+- 缓存常用数据
+- 异步IO操作

@@ -1,0 +1,497 @@
+# 扫描仪领域知识和业务逻辑
+
+## 扫描仪硬件架构理解
+
+### 1. 扫描仪类型和特点
+```cpp
+enum class ScannerType {
+    Flatbed,        // 平板式扫描仪 - 最常见类型
+    SheetFed,       // 馈纸式扫描仪 - 办公用途
+    Handheld,       // 手持式扫描仪 - 便携性
+    Film,           // 胶片扫描仪 - 专业用途
+    Drum,           // 滚筒式扫描仪 - 高端印刷
+    Network         // 网络扫描仪 - 共享使用
+};
+
+// ✅ 业务逻辑：不同类型扫描仪的特性差异
+class ScannerCapabilities
+{
+public:
+    // 平板式：支持厚重文档，分辨率适中
+    static ScanParameters getFlatbedDefaults() {
+        ScanParameters params;
+        params.maxResolution = 4800;     // DPI
+        params.maxScanArea = QSizeF(216, 297); // A4 size in mm
+        params.supportedSources = {ScanSource::Flatbed};
+        return params;
+    }
+    
+    // 馈纸式：快速批量扫描，单面/双面
+    static ScanParameters getSheetFedDefaults() {
+        ScanParameters params;
+        params.maxResolution = 1200;     // 通常较低
+        params.supportsDuplex = true;    // 双面扫描
+        params.supportedSources = {ScanSource::ADF};
+        params.maxSheetCount = 50;       // 自动进纸容量
+        return params;
+    }
+};
+```
+
+### 2. 扫描仪芯片组架构
+```cpp
+// ✅ 重要：Genesys芯片组是最常见的扫描仪芯片组
+enum class GenesysChipset {
+    GL646,      // 入门级，USB 1.1
+    GL841,      // 中端，USB 2.0
+    GL842,      // 改进版GL841
+    GL843,      // 高端，更好的图像质量
+    GL846,      // 专业级，高分辨率
+    GL847,      // 最新，USB 3.0支持
+    GL124       // 低功耗版本
+};
+
+class GenesysDeviceProfile
+{
+public:
+    struct ChipsetCapabilities {
+        int maxResolution;
+        QList<ScanMode> supportedModes;
+        bool supportsHighSpeed;
+        bool supportsColorCorrection;
+    };
+    
+    // ✅ 业务逻辑：芯片组决定设备能力
+    static ChipsetCapabilities getCapabilities(GenesysChipset chipset) {
+        switch (chipset) {
+        case GenesysChipset::GL646:
+            return {1200, {ScanMode::Lineart, ScanMode::Gray, ScanMode::Color}, false, false};
+        case GenesysChipset::GL847:
+            return {4800, {ScanMode::Lineart, ScanMode::Gray, ScanMode::Color, ScanMode::ColorFast}, true, true};
+        default:
+            return getDefaultCapabilities();
+        }
+    }
+};
+```
+
+## 扫描参数和图像处理
+
+### 1. 分辨率和图像质量关系
+```cpp
+// ✅ 业务知识：分辨率选择的应用场景
+class ResolutionRecommendation
+{
+public:
+    enum class UseCase {
+        WebDisplay,      // 网页显示
+        EmailAttachment, // 邮件附件
+        PrintDocument,   // 打印文档
+        PhotoArchive,    // 照片归档
+        OCRProcessing,   // 文字识别
+        ProfessionalPrint // 专业印刷
+    };
+    
+    static int recommendedDPI(UseCase useCase) {
+        switch (useCase) {
+        case UseCase::WebDisplay:       return 150;  // 屏幕显示足够
+        case UseCase::EmailAttachment:  return 200;  // 平衡质量和大小
+        case UseCase::PrintDocument:    return 300;  // 标准打印质量
+        case UseCase::PhotoArchive:     return 600;  // 高质量保存
+        case UseCase::OCRProcessing:    return 300;  // OCR最佳识别率
+        case UseCase::ProfessionalPrint: return 1200; // 专业印刷要求
+        }
+        return 300; // 默认值
+    }
+    
+    // ✅ 重要：文件大小预估 - 帮助用户做决策
+    static qint64 estimateFileSize(const QSize& scanArea, int dpi, ColorMode mode) {
+        qint64 pixels = (scanArea.width() * dpi / 25.4) * (scanArea.height() * dpi / 25.4);
+        int bytesPerPixel = (mode == ColorMode::Color) ? 3 : 
+                           (mode == ColorMode::Gray) ? 1 : 1; // Lineart压缩率高
+        return pixels * bytesPerPixel;
+    }
+};
+```
+
+### 2. 色彩模式和应用场景
+```cpp
+// ✅ 业务逻辑：色彩模式的选择策略
+class ColorModeStrategy
+{
+public:
+    enum class DocumentType {
+        TextDocument,    // 纯文本文档
+        MixedDocument,   // 图文混合
+        Photo,           // 照片
+        Drawing,         // 线稿图形
+        OldDocument      // 老旧文档
+    };
+    
+    static ColorMode recommendColorMode(DocumentType docType) {
+        switch (docType) {
+        case DocumentType::TextDocument:
+            return ColorMode::Lineart;    // 最小文件，最快速度
+        case DocumentType::MixedDocument:
+            return ColorMode::Color;      // 保持所有信息
+        case DocumentType::Photo:
+            return ColorMode::Color;      // 必须彩色
+        case DocumentType::Drawing:
+            return ColorMode::Gray;       // 保持细节
+        case DocumentType::OldDocument:
+            return ColorMode::Color;      // 保持原始外观
+        }
+        return ColorMode::Color; // 默认最安全选择
+    }
+    
+    // ✅ 图像处理提示
+    static QString getProcessingHint(ColorMode mode, DocumentType docType) {
+        if (mode == ColorMode::Lineart && docType == DocumentType::OldDocument) {
+            return "建议降噪处理，去除纸张污迹";
+        }
+        if (mode == ColorMode::Color && docType == DocumentType::Photo) {
+            return "建议色彩校正和锐化处理";
+        }
+        return "";
+    }
+};
+```
+
+## 设备通信和协议
+
+### 1. SANE协议理解
+```cpp
+// ✅ 重要：SANE协议是Linux扫描标准
+class SANEProtocolHandler
+{
+public:
+    // SANE选项类型和业务含义
+    enum class SANEOptionType {
+        Resolution,      // 分辨率 - 影响图像质量和扫描时间
+        ScanArea,        // 扫描区域 - 影响输出尺寸
+        ColorMode,       // 色彩模式 - 影响文件大小和质量
+        Source,          // 扫描源 - 平板或自动进纸
+        Brightness,      // 亮度 - 图像后处理
+        Contrast,        // 对比度 - 图像后处理
+        Gamma           // 伽马校正 - 色彩准确性
+    };
+    
+    // ✅ 业务逻辑：选项的依赖关系
+    static bool isOptionDependentOn(SANEOptionType option, SANEOptionType dependency) {
+        // 例如：ADF源时，某些选项不可用
+        if (option == SANEOptionType::ScanArea && dependency == SANEOptionType::Source) {
+            return true; // 扫描区域依赖于扫描源
+        }
+        return false;
+    }
+    
+    // ✅ 选项值的有效性检查
+    static bool validateOptionValue(SANEOptionType type, const QVariant& value) {
+        switch (type) {
+        case SANEOptionType::Resolution:
+            return value.toInt() >= 50 && value.toInt() <= 9600; // 常见范围
+        case SANEOptionType::Brightness:
+            return value.toInt() >= -100 && value.toInt() <= 100; // 百分比
+        default:
+            return true;
+        }
+    }
+};
+```
+
+### 2. 网络扫描协议
+```cpp
+// ✅ 现代扫描仪支持多种网络协议
+class NetworkScannerProtocol
+{
+public:
+    enum class ProtocolType {
+        SANE_NET,       // SANE网络协议
+        WSD,            // Web Services for Devices
+        eSCL,           // AirPrint扫描标准
+        TWAIN_Direct,   // TWAIN网络版
+        IPP_Scan        // Internet Printing Protocol扫描
+    };
+    
+    struct ProtocolCapabilities {
+        bool supportsDiscovery;     // 自动发现
+        bool supportsPush;          // 推送扫描
+        bool supportsPreview;       // 预览功能
+        bool supportsJobQueue;      // 任务队列
+        int defaultPort;
+    };
+    
+    // ✅ 不同协议的特点和应用场景
+    static ProtocolCapabilities getCapabilities(ProtocolType protocol) {
+        switch (protocol) {
+        case ProtocolType::WSD:
+            return {true, true, true, false, 5357}; // Windows标准
+        case ProtocolType::eSCL:
+            return {true, false, true, true, 80};   // Apple标准
+        case ProtocolType::SANE_NET:
+            return {false, false, true, false, 6566}; // 传统Linux
+        default:
+            return {false, false, false, false, 0};
+        }
+    }
+};
+```
+
+## 图像处理算法业务逻辑
+
+### 1. 文档图像优化
+```cpp
+// ✅ 扫描文档的常见问题和解决方案
+class DocumentImageOptimization
+{
+public:
+    enum class DocumentIssue {
+        Skewed,          // 倾斜 - 扫描时放歪
+        LowContrast,     // 对比度低 - 老旧文档
+        Background,      // 背景不纯 - 纸张发黄
+        Noise,           // 噪点 - 脏污或设备问题
+        Blurred,         // 模糊 - 扫描时移动
+        MoirePattern     // 摩尔纹 - 网点印刷品
+    };
+    
+    // ✅ 业务逻辑：问题检测和处理策略
+    static QList<DocumentIssue> detectIssues(const QImage& image) {
+        QList<DocumentIssue> issues;
+        
+        // 检测倾斜：通过直线检测算法
+        if (detectSkew(image) > 0.5) {
+            issues.append(DocumentIssue::Skewed);
+        }
+        
+        // 检测对比度：直方图分析
+        if (calculateContrast(image) < 0.3) {
+            issues.append(DocumentIssue::LowContrast);
+        }
+        
+        // 检测背景：边缘区域色彩分析
+        if (!isBackgroundClean(image)) {
+            issues.append(DocumentIssue::Background);
+        }
+        
+        return issues;
+    }
+    
+    // ✅ 自动修复策略
+    static ImageProcessingParameters getAutoFixParameters(DocumentIssue issue) {
+        ImageProcessingParameters params;
+        
+        switch (issue) {
+        case DocumentIssue::Skewed:
+            params.rotationAngle = detectSkewAngle(); // 自动纠偏
+            break;
+        case DocumentIssue::LowContrast:
+            params.contrast = 1.3;    // 增强对比度
+            params.gamma = 0.9;       // 调整伽马
+            break;
+        case DocumentIssue::Background:
+            params.filters.append(FilterType::BackgroundCleanup);
+            break;
+        case DocumentIssue::Noise:
+            params.filters.append(FilterType::Denoise);
+            break;
+        }
+        
+        return params;
+    }
+
+private:
+    static double detectSkew(const QImage& image) {
+        // 实现倾斜检测算法
+        return 0.0; // 占位实现
+    }
+    
+    static double calculateContrast(const QImage& image) {
+        // 实现对比度计算
+        return 1.0; // 占位实现
+    }
+    
+    static bool isBackgroundClean(const QImage& image) {
+        // 实现背景清洁度检测
+        return true; // 占位实现
+    }
+    
+    static double detectSkewAngle() {
+        // 计算需要纠正的角度
+        return 0.0; // 占位实现
+    }
+};
+```
+
+### 2. 批量处理业务逻辑
+```cpp
+// ✅ 批量扫描的实际业务需求
+class BatchScanStrategy
+{
+public:
+    enum class BatchType {
+        OfficeDocuments,    // 办公文档 - 统一格式
+        PhotoArchive,       // 照片归档 - 保持原始质量
+        BookDigitization,   // 图书数字化 - 页面连续性
+        ReceiptScanning,    // 票据扫描 - 快速识别
+        CardScanning        // 卡片扫描 - 标准尺寸
+    };
+    
+    struct BatchSettings {
+        ScanParameters scanParams;
+        ImageProcessingParameters processParams;
+        QString namingPattern;      // 文件命名模式
+        QString outputFormat;       // 输出格式
+        bool autoProcess;          // 自动处理
+        bool autoOCR;             // 自动文字识别
+    };
+    
+    // ✅ 不同批量类型的最佳实践设置
+    static BatchSettings getBatchSettings(BatchType type) {
+        BatchSettings settings;
+        
+        switch (type) {
+        case BatchType::OfficeDocuments:
+            settings.scanParams.resolution = 300;
+            settings.scanParams.colorMode = ColorMode::Gray;
+            settings.processParams.filters.append(FilterType::AutoContrast);
+            settings.namingPattern = "Doc_%1_%2"; // 文档_日期_序号
+            settings.outputFormat = "PDF";
+            settings.autoProcess = true;
+            settings.autoOCR = true;
+            break;
+            
+        case BatchType::PhotoArchive:
+            settings.scanParams.resolution = 600;
+            settings.scanParams.colorMode = ColorMode::Color;
+            settings.processParams.filters.append(FilterType::ColorCorrection);
+            settings.namingPattern = "Photo_%1_%2";
+            settings.outputFormat = "JPEG";
+            settings.autoProcess = true;
+            settings.autoOCR = false;
+            break;
+            
+        case BatchType::BookDigitization:
+            settings.scanParams.resolution = 400;
+            settings.scanParams.colorMode = ColorMode::Gray;
+            settings.processParams.filters.append(FilterType::DeskewCorrection);
+            settings.processParams.filters.append(FilterType::BookBinding); // 特殊：装订线处理
+            settings.namingPattern = "Page_%1";
+            settings.outputFormat = "TIFF"; // 无损格式
+            settings.autoProcess = true;
+            settings.autoOCR = true;
+            break;
+        }
+        
+        return settings;
+    }
+    
+    // ✅ 批量处理中的质量控制
+    static bool validateBatchQuality(const QList<QImage>& images) {
+        int goodQualityCount = 0;
+        
+        for (const auto& image : images) {
+            if (isImageQualityAcceptable(image)) {
+                goodQualityCount++;
+            }
+        }
+        
+        // 至少80%的图像质量合格
+        return (goodQualityCount * 100 / images.size()) >= 80;
+    }
+
+private:
+    static bool isImageQualityAcceptable(const QImage& image) {
+        // 实现图像质量评估
+        // 检查分辨率、清晰度、对比度等指标
+        return !image.isNull() && image.width() > 100 && image.height() > 100;
+    }
+};
+```
+
+## 用户体验和交互设计
+
+### 1. 扫描进度和状态管理
+```cpp
+// ✅ 用户体验：清晰的状态反馈
+class ScanProgressManager
+{
+public:
+    enum class ScanStage {
+        Initializing,       // 初始化设备
+        Warming,           // 灯管预热
+        Calibrating,       // 校准扫描头
+        Scanning,          // 实际扫描
+        Processing,        // 图像处理
+        Saving,            // 保存文件
+        Completed,         // 完成
+        Error              // 错误状态
+    };
+    
+    struct ProgressInfo {
+        ScanStage stage;
+        int percentage;         // 当前阶段进度百分比
+        QString description;    // 用户友好的描述
+        qint64 estimatedTime;  // 预估剩余时间（毫秒）
+    };
+    
+    // ✅ 用户体验：各阶段的预期时间
+    static qint64 getStageEstimatedDuration(ScanStage stage, const ScanParameters& params) {
+        switch (stage) {
+        case ScanStage::Initializing:
+            return 2000;  // 2秒初始化
+        case ScanStage::Warming:
+            return 5000;  // 5秒预热（冷启动时）
+        case ScanStage::Calibrating:
+            return 3000;  // 3秒校准
+        case ScanStage::Scanning:
+            // 基于分辨率和扫描面积计算
+            return calculateScanTime(params);
+        case ScanStage::Processing:
+            return 2000;  // 2秒处理
+        case ScanStage::Saving:
+            return 1000;  // 1秒保存
+        default:
+            return 0;
+        }
+    }
+    
+    // ✅ 用户友好的状态描述
+    static QString getStageDescription(ScanStage stage) {
+        switch (stage) {
+        case ScanStage::Initializing:
+            return tr("正在初始化扫描仪...");
+        case ScanStage::Warming:
+            return tr("正在预热灯管，请稍候...");
+        case ScanStage::Calibrating:
+            return tr("正在校准扫描仪...");
+        case ScanStage::Scanning:
+            return tr("正在扫描，请勿移动文档...");
+        case ScanStage::Processing:
+            return tr("正在处理图像...");
+        case ScanStage::Saving:
+            return tr("正在保存文件...");
+        case ScanStage::Completed:
+            return tr("扫描完成！");
+        case ScanStage::Error:
+            return tr("扫描过程中发生错误");
+        }
+        return "";
+    }
+
+private:
+    static qint64 calculateScanTime(const ScanParameters& params) {
+        // 基于分辨率和面积的扫描时间估算
+        double area = params.scanArea.width() * params.scanArea.height(); // mm²
+        double pixels = (params.resolution / 25.4) * (params.resolution / 25.4) * area;
+        
+        // 经验公式：每百万像素约需1秒（取决于设备性能）
+        return static_cast<qint64>(pixels / 1000000 * 1000);
+    }
+};
+```
+
+这些领域知识帮助开发者理解扫描仪的实际业务需求和技术特点，从而编写出更符合用户预期和行业标准的代码。
+description:
+globs:
+alwaysApply: false
+---

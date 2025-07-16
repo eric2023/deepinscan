@@ -1,0 +1,598 @@
+{
+  "version": "1.0",
+  "description": "DeepinScan Scanner Device Database",
+  "last_updated": "2024-01-01",
+  "known_devices": [
+    {
+      "vendor_id": 1208,
+      "product_id": 513,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 UB",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 514,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 UB Plus",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 515,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 CU",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 516,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 CU Plus",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 517,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress A3 USB",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 518,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 519,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 USB",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 520,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU Plus",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 521,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 522,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB Plus",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 523,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 CU",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 524,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress A3 USB",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 525,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 526,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 USB",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 527,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU Plus",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 528,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 529,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB Plus",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 530,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 CU",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 531,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress A3 USB",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 532,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 533,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 USB",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 534,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU Plus",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 535,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 536,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB Plus",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 537,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 CU",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 538,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress A3 USB",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 539,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 540,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 USB",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 541,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU Plus",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 542,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB",
+      "driver_type": 1,
+      "protocol": 1
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 543,
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB Plus",
+      "driver_type": 1,
+      "protocol": 1
+    }
+  ],
+  "devices": [
+    {
+      "vendor_id": 1208,
+      "product_id": 513,
+      "name": "Mustek ScanExpress 1200 UB",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 UB",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 514,
+      "name": "Mustek ScanExpress 1200 UB Plus",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 UB Plus",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 515,
+      "name": "Mustek ScanExpress 1200 CU",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 CU",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 516,
+      "name": "Mustek ScanExpress 1200 CU Plus",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 CU Plus",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 517,
+      "name": "Mustek ScanExpress A3 USB",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress A3 USB",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed", "large_format"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 518,
+      "name": "Mustek ScanExpress 600 CU",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 519,
+      "name": "Mustek ScanExpress 600 USB",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 USB",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 520,
+      "name": "Mustek ScanExpress 600 CU Plus",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU Plus",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 521,
+      "name": "Mustek ScanExpress 1200 USB",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 522,
+      "name": "Mustek ScanExpress 1200 USB Plus",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB Plus",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 523,
+      "name": "Mustek ScanExpress 1200 CU",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 CU",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 524,
+      "name": "Mustek ScanExpress A3 USB",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress A3 USB",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed", "large_format"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 525,
+      "name": "Mustek ScanExpress 600 CU",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 526,
+      "name": "Mustek ScanExpress 600 USB",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 USB",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 527,
+      "name": "Mustek ScanExpress 600 CU Plus",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU Plus",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 528,
+      "name": "Mustek ScanExpress 1200 USB",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 529,
+      "name": "Mustek ScanExpress 1200 USB Plus",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB Plus",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 530,
+      "name": "Mustek ScanExpress 1200 CU",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 CU",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 531,
+      "name": "Mustek ScanExpress A3 USB",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress A3 USB",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed", "large_format"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 532,
+      "name": "Mustek ScanExpress 600 CU",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 533,
+      "name": "Mustek ScanExpress 600 USB",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 USB",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 534,
+      "name": "Mustek ScanExpress 600 CU Plus",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU Plus",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 535,
+      "name": "Mustek ScanExpress 1200 USB",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 536,
+      "name": "Mustek ScanExpress 1200 USB Plus",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB Plus",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 537,
+      "name": "Mustek ScanExpress 1200 CU",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 CU",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 538,
+      "name": "Mustek ScanExpress A3 USB",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress A3 USB",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed", "large_format"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 539,
+      "name": "Mustek ScanExpress 600 CU",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 540,
+      "name": "Mustek ScanExpress 600 USB",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 USB",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 541,
+      "name": "Mustek ScanExpress 600 CU Plus",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 600 CU Plus",
+      "protocol": 1,
+      "max_resolution": 600,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 542,
+      "name": "Mustek ScanExpress 1200 USB",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    },
+    {
+      "vendor_id": 1208,
+      "product_id": 543,
+      "name": "Mustek ScanExpress 1200 USB Plus",
+      "manufacturer": "Mustek",
+      "model": "ScanExpress 1200 USB Plus",
+      "protocol": 1,
+      "max_resolution": 1200,
+      "supported_formats": ["RGB24", "Gray8", "Mono1"],
+      "features": ["flatbed"]
+    }
+  ]
+} 

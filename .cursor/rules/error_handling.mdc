@@ -1,0 +1,204 @@
+# 错误处理和调试规范
+
+## 异常设计
+
+### 1. 项目异常体系
+```cpp
+// ✅ 使用项目特定异常类
+class DScannerException : public std::runtime_error {
+public:
+    explicit DScannerException(const QString& message)
+        : std::runtime_error(message.toStdString()) {}
+    
+    virtual QString message() const {
+        return QString::fromStdString(what());
+    }
+};
+
+// ✅ 具体异常类型
+class DeviceNotFoundException : public DScannerException {
+public:
+    explicit DeviceNotFoundException(const QString& deviceId)
+        : DScannerException(tr("Device not found: %1").arg(deviceId)) {}
+};
+```
+
+### 2. 错误传播
+```cpp
+// ✅ 清晰的错误传播策略
+bool openDevice(const QString& deviceName) {
+    try {
+        if (!internalOpenDevice(deviceName)) {
+            emit errorOccurred(tr("Failed to open device: %1").arg(deviceName));
+            return false;
+        }
+        return true;
+    } catch (const DScannerException& e) {
+        qCCritical(deviceLog) << "Exception:" << e.message();
+        emit errorOccurred(e.message());
+        return false;
+    }
+}
+```
+
+## 日志系统
+
+### 1. 日志分类
+```cpp
+// ✅ 使用分类日志
+Q_DECLARE_LOGGING_CATEGORY(deviceLog)
+Q_DECLARE_LOGGING_CATEGORY(scanLog)
+Q_DECLARE_LOGGING_CATEGORY(imageLog)
+Q_DECLARE_LOGGING_CATEGORY(networkLog)
+
+// 在.cpp文件中定义
+Q_LOGGING_CATEGORY(deviceLog, "deepinscan.device")
+Q_LOGGING_CATEGORY(scanLog, "deepinscan.scan")
+```
+
+### 2. 日志级别使用
+```cpp
+// ✅ 适当的日志级别
+qCDebug(deviceLog) << "Device discovery started";
+qCInfo(scanLog) << "Scan completed successfully";
+qCWarning(imageLog) << "Image quality may be affected";
+qCCritical(networkLog) << "Network connection failed";
+```
+
+### 3. 关键记录点
+- 设备连接状态变化
+- 扫描任务开始/完成/失败
+- 图像处理操作
+- 网络通信错误
+- 用户操作和参数变更
+
+## 调试支持
+
+### 1. 调试信息
+```cpp
+// ✅ 提供有用的调试信息
+class DebugHelper {
+public:
+    static QString deviceInfo(const DScannerDevice* device) {
+        return QString("Device[id=%1, name=%2, connected=%3]")
+            .arg(device->deviceId())
+            .arg(device->deviceName())
+            .arg(device->isConnected());
+    }
+    
+    static QString scanParamsInfo(const ScanParameters& params) {
+        return QString("ScanParams[resolution=%1, mode=%2, area=%3x%4]")
+            .arg(params.resolution)
+            .arg(static_cast<int>(params.colorMode))
+            .arg(params.scanArea.width())
+            .arg(params.scanArea.height());
+    }
+};
+```
+
+### 2. 性能监控
+```cpp
+// ✅ 性能监控和诊断
+class PerformanceMonitor {
+public:
+    void startOperation(const QString& operation) {
+        m_timers[operation] = QDateTime::currentMSecsSinceEpoch();
+    }
+    
+    void endOperation(const QString& operation) {
+        auto elapsed = QDateTime::currentMSecsSinceEpoch() - m_timers[operation];
+        qCDebug(perfLog) << operation << "took" << elapsed << "ms";
+    }
+
+private:
+    QHash<QString, qint64> m_timers;
+};
+```
+
+## 错误恢复
+
+### 1. 自动重试机制
+```cpp
+// ✅ 智能重试策略
+class RetryManager {
+public:
+    template<typename Func>
+    auto executeWithRetry(Func func, int maxRetries = 3) {
+        for (int attempt = 0; attempt < maxRetries; ++attempt) {
+            try {
+                return func();
+            } catch (const TransientException& e) {
+                if (attempt == maxRetries - 1) throw;
+                qCWarning(retryLog) << "Retry" << (attempt + 1) << "for:" << e.what();
+                QThread::msleep(1000 * (attempt + 1)); // 递增延迟
+            }
+        }
+    }
+};
+```
+
+### 2. 状态恢复
+```cpp
+// ✅ 设备状态恢复
+class DeviceStateManager {
+public:
+    void saveState(const QString& deviceId, const DeviceState& state) {
+        m_savedStates[deviceId] = state;
+    }
+    
+    bool restoreState(const QString& deviceId) {
+        auto it = m_savedStates.find(deviceId);
+        if (it != m_savedStates.end()) {
+            return applyState(deviceId, it.value());
+        }
+        return false;
+    }
+};
+```
+
+## 用户友好的错误信息
+
+### 1. 错误信息本地化
+```cpp
+// ✅ 用户友好的错误信息
+class ErrorMessageProvider {
+public:
+    static QString getUserFriendlyMessage(ErrorCode code) {
+        switch (code) {
+        case ErrorCode::DeviceNotFound:
+            return tr("未找到扫描仪设备。请检查设备连接和电源。");
+        case ErrorCode::DeviceBusy:
+            return tr("扫描仪正在被其他程序使用。请稍后再试。");
+        case ErrorCode::InsufficientMemory:
+            return tr("内存不足，无法处理此图像。请尝试降低分辨率。");
+        default:
+            return tr("发生未知错误。请联系技术支持。");
+        }
+    }
+};
+```
+
+### 2. 错误处理建议
+```cpp
+// ✅ 提供解决建议
+struct ErrorSuggestion {
+    QString problem;
+    QStringList solutions;
+    QString helpUrl;
+};
+
+static ErrorSuggestion getErrorSuggestion(ErrorCode code) {
+    switch (code) {
+    case ErrorCode::DeviceNotFound:
+        return {
+            tr("未找到扫描仪"),
+            {tr("检查USB连接"), tr("重启设备"), tr("更新驱动程序")},
+            "https://help.deepinscan.org/device-not-found"
+        };
+    }
+}
+```
+description:
+globs:
+alwaysApply: false
+---

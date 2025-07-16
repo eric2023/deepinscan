@@ -1,0 +1,361 @@
+# 文档和注释标准
+
+## 代码注释规范
+
+### 1. 公共API注释
+```cpp
+/**
+ * @brief 扫描仪设备管理类
+ * 
+ * DScannerDevice提供对扫描仪设备的统一访问接口，支持多种厂商
+ * 和协议的扫描设备。该类封装了设备连接、参数配置、扫描操作等
+ * 核心功能。
+ * 
+ * @note 此类使用Pimpl模式实现，保证ABI稳定性
+ * @since 1.0.0
+ */
+class DSCANNER_EXPORT DScannerDevice : public QObject
+{
+    Q_OBJECT
+
+public:
+    /**
+     * @brief 构造函数
+     * @param parent 父对象指针，用于Qt对象树管理
+     */
+    explicit DScannerDevice(QObject* parent = nullptr);
+
+    /**
+     * @brief 连接到指定的扫描仪设备
+     * 
+     * 尝试建立与扫描仪设备的连接。此操作可能耗时，建议在后台线程调用。
+     * 
+     * @param deviceId 设备唯一标识符，通过设备发现获得
+     * @return 连接成功返回true，失败返回false
+     * 
+     * @throws DeviceNotFoundException 设备不存在时抛出
+     * @throws DeviceBusyException 设备被占用时抛出
+     * 
+     * @see discoverDevices()
+     * @see disconnect()
+     */
+    bool connectToDevice(const QString& deviceId);
+
+signals:
+    /**
+     * @brief 扫描进度信号
+     * @param progress 进度百分比 (0-100)
+     * @param stage 当前扫描阶段描述
+     */
+    void scanProgress(int progress, const QString& stage);
+};
+```
+
+### 2. 实现注释
+```cpp
+bool DScannerDevice::connectToDevice(const QString& deviceId)
+{
+    Q_D(DScannerDevice);
+    
+    // 验证输入参数
+    if (deviceId.isEmpty()) {
+        qCWarning(deviceLog) << "Device ID cannot be empty";
+        return false;
+    }
+    
+    // 检查是否已连接
+    if (d->isConnected) {
+        qCInfo(deviceLog) << "Device already connected:" << deviceId;
+        return true;
+    }
+    
+    try {
+        // 1. 查找设备驱动
+        auto driver = findDriverForDevice(deviceId);
+        if (!driver) {
+            throw DeviceNotFoundException(deviceId);
+        }
+        
+        // 2. 初始化设备连接
+        // 某些设备需要特殊的初始化序列
+        if (!driver->initialize()) {
+            qCCritical(deviceLog) << "Failed to initialize device:" << deviceId;
+            return false;
+        }
+        
+        // 3. 建立通信连接
+        d->connectionHandle = driver->connect();
+        d->isConnected = true;
+        
+        qCInfo(deviceLog) << "Successfully connected to device:" << deviceId;
+        return true;
+        
+    } catch (const DScannerException& e) {
+        qCCritical(deviceLog) << "Connection failed:" << e.message();
+        throw; // 重新抛出，让调用者处理
+    }
+}
+```
+
+### 3. 算法注释
+```cpp
+/**
+ * @brief 自动纠偏算法实现
+ * 
+ * 使用Hough变换检测文档中的直线，计算文档的倾斜角度并进行纠正。
+ * 算法步骤：
+ * 1. 边缘检测 - 使用Canny算子提取边缘
+ * 2. 直线检测 - Hough变换找到主要直线
+ * 3. 角度计算 - 统计直线角度分布
+ * 4. 图像旋转 - 使用双线性插值旋转图像
+ * 
+ * @param image 输入图像，要求为灰度图像
+ * @return 纠偏后的图像
+ * 
+ * @complexity O(n*m*log(n*m)) 其中n,m为图像宽高
+ * @accuracy 角度检测精度约0.1度
+ */
+QImage correctDocumentSkew(const QImage& image)
+{
+    // 参数配置
+    const double cannyThreshold1 = 50.0;   // Canny低阈值
+    const double cannyThreshold2 = 150.0;  // Canny高阈值
+    const int houghThreshold = 100;        // Hough变换阈值
+    
+    // 1. 边缘检测
+    // Canny算子对噪声敏感度低，适合文档图像
+    QImage edges = cannyEdgeDetection(image, cannyThreshold1, cannyThreshold2);
+    
+    // 2. 直线检测
+    // 使用概率Hough变换，计算效率更高
+    auto lines = probabilisticHoughTransform(edges, houghThreshold);
+    
+    // 3. 角度统计
+    // 文档通常有水平和垂直的主要边缘
+    QMap<double, int> angleHistogram;
+    for (const auto& line : lines) {
+        double angle = calculateLineAngle(line);
+        // 将角度归一化到[-45, 45]度范围
+        angle = normalizeAngle(angle);
+        angleHistogram[angle]++;
+    }
+    
+    // 4. 找到主导角度
+    double dominantAngle = findDominantAngle(angleHistogram);
+    
+    // 5. 旋转纠正
+    if (std::abs(dominantAngle) > 0.1) { // 忽略微小角度
+        return rotateImage(image, -dominantAngle);
+    }
+    
+    return image; // 无需纠正
+}
+```
+
+## 文档组织
+
+### 1. README结构
+```markdown
+# DeepinScan - 项目标题
+
+## 项目概述
+- 简洁的项目描述
+- 主要功能特性
+- 技术架构简介
+
+## 快速开始
+- 系统要求
+- 依赖安装
+- 编译构建
+- 基本使用
+
+## 开发指南
+- 代码规范
+- 架构设计
+- 调试技巧
+- 贡献指南
+
+## API文档
+- 核心接口
+- 使用示例
+- 最佳实践
+
+## 更新日志
+- 版本历史
+- 功能变更
+- 已知问题
+```
+
+### 2. API文档
+```cpp
+/**
+ * @file DScannerImageProcessor.h
+ * @brief 图像处理核心接口
+ * @author eric2023
+ * @date 2024-2025
+ * @version 1.0.0
+ * 
+ * 此文件定义了DeepinScan的图像处理核心接口，提供专业级的
+ * 扫描图像处理功能，包括色彩校正、降噪、锐化等算法。
+ */
+
+/**
+ * @namespace DeepinScan
+ * @brief DeepinScan项目命名空间
+ * 
+ * 包含所有DeepinScan相关的类、函数和常量定义。
+ */
+namespace DeepinScan {
+
+/**
+ * @example basic_usage.cpp
+ * 基本使用示例，演示如何进行设备发现和扫描操作。
+ */
+
+/**
+ * @example image_processing.cpp
+ * 图像处理示例，展示各种图像增强算法的使用方法。
+ */
+
+} // namespace DeepinScan
+```
+
+### 3. 变更日志
+```markdown
+# 更新日志
+
+所有重要的项目变更都会记录在此文件中。
+
+格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
+版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+
+## [未发布]
+
+### 新增
+- 新功能描述
+
+### 变更
+- 功能变更描述
+
+### 修复
+- Bug修复描述
+
+## [1.0.0] - 2024-12-15
+
+### 新增
+- 完整的扫描仪设备支持
+- DTK图形界面实现
+- 图像处理管道
+- 网络设备发现
+- 批量扫描功能
+
+### 技术亮点
+- 支持6000+扫描设备
+- 现代化C++17架构
+- 高性能图像处理算法
+- 完整的SANE协议支持
+```
+
+## 内联文档
+
+### 1. 配置文件注释
+```cpp
+// config.h
+#ifndef CONFIG_H
+#define CONFIG_H
+
+/**
+ * @brief 应用程序配置常量
+ * 
+ * 此文件包含DeepinScan应用程序的编译时配置常量。
+ * 修改这些值需要重新编译应用程序。
+ */
+
+/// @brief 应用程序版本号
+#define DEEPINSCAN_VERSION "1.0.0"
+
+/// @brief 最大支持的扫描分辨率 (DPI)
+static constexpr int MAX_SCAN_RESOLUTION = 9600;
+
+/// @brief 默认的图像处理内存限制 (MB)
+static constexpr int DEFAULT_MEMORY_LIMIT = 512;
+
+/// @brief 设备发现超时时间 (毫秒)
+static constexpr int DEVICE_DISCOVERY_TIMEOUT = 30000;
+
+#endif // CONFIG_H
+```
+
+### 2. 复杂逻辑注释
+```cpp
+void processComplexImageAlgorithm(const QImage& input)
+{
+    /*
+     * 复杂图像处理算法实现
+     * 
+     * 此算法结合了多种图像处理技术：
+     * 1. 自适应阈值处理 - 处理光照不均
+     * 2. 形态学操作 - 去除噪点和填补空洞
+     * 3. 连通域分析 - 识别文字区域
+     * 4. 几何校正 - 纠正透视变形
+     * 
+     * 算法复杂度: O(n²·log(n))
+     * 内存需求: 3x输入图像大小
+     */
+    
+    // Step 1: 自适应阈值
+    // 使用Otsu算法自动确定阈值，适应不同光照条件
+    QImage binary = adaptiveThreshold(input);
+    
+    // Step 2: 形态学操作
+    // 开运算：先腐蚀后膨胀，去除小噪点
+    // 闭运算：先膨胀后腐蚀，填补文字内部空洞
+    QImage cleaned = morphologyOperation(binary, MorphOp::Opening);
+    cleaned = morphologyOperation(cleaned, MorphOp::Closing);
+    
+    // Step 3: 连通域分析
+    // 标记所有连通区域，过滤掉面积过小的噪点
+    auto components = connectedComponentAnalysis(cleaned);
+    filterSmallComponents(components, MIN_COMPONENT_SIZE);
+    
+    // Step 4: 几何校正
+    // 检测四边形轮廓，计算透视变换矩阵
+    auto contours = findContours(cleaned);
+    auto quad = findLargestQuadrilateral(contours);
+    if (quad.isValid()) {
+        auto transform = calculatePerspectiveTransform(quad);
+        return perspectiveCorrection(input, transform);
+    }
+    
+    return input; // 无需校正
+}
+```
+
+## 文档维护
+
+### 1. 文档同步
+- 代码变更时同步更新注释
+- API变更必须更新文档
+- 定期检查文档的准确性
+
+### 2. 文档生成
+```bash
+# 使用Doxygen生成API文档
+doxygen Doxyfile
+
+# 生成覆盖率报告
+make coverage
+
+# 生成性能分析报告
+make profile
+```
+
+### 3. 文档质量检查
+- 确保所有公共API有完整注释
+- 验证示例代码的正确性
+- 检查链接和引用的有效性
+- 保持文档风格的一致性
+description:
+globs:
+alwaysApply: false
+---

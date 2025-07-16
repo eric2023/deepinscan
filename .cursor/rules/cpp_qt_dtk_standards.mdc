@@ -1,0 +1,422 @@
+# C++/Qt/DTK 编码标准
+
+## C++17 现代特性使用
+
+### 1. 类型推导和声明
+```cpp
+// ✅ 推荐：使用auto进行类型推导
+auto device = manager->getDevice("scanner1");
+auto result = std::make_unique<DScannerDevice>();
+
+// ✅ 推荐：使用structured bindings
+if (auto [success, error] = device->performScan(); !success) {
+    qCWarning(scannerLog) << "Scan failed:" << error;
+}
+
+// ❌ 避免：明显的类型重复
+DScannerDevice* device = new DScannerDevice();
+```
+
+### 2. 智能指针管理
+```cpp
+// ✅ 推荐：使用std::unique_ptr
+std::unique_ptr<ImageProcessor> processor = std::make_unique<ImageProcessor>();
+
+// ✅ 推荐：Qt智能指针
+QScopedPointer<DScannerDevice> device(new DScannerDevice());
+
+// ✅ 推荐：Qt对象树管理
+auto* widget = new DeviceListWidget(this); // this作为parent
+
+// ❌ 禁止：裸指针管理动态内存
+DScannerDevice* device = new DScannerDevice(); // 没有明确的释放策略
+```
+
+### 3. 容器和算法
+```cpp
+// ✅ 推荐：使用范围for循环
+for (const auto& device : deviceList) {
+    processDevice(device);
+}
+
+// ✅ 推荐：使用STL算法
+auto it = std::find_if(devices.begin(), devices.end(),
+    [](const auto& device) { return device.isOnline(); });
+
+// ✅ 推荐：使用初始化列表
+QStringList formats{"PNG", "JPEG", "TIFF", "PDF"};
+```
+
+## Qt框架特定规范
+
+### 1. 信号槽机制
+```cpp
+// ✅ 推荐：使用新语法信号槽连接
+connect(scanButton, &QPushButton::clicked,
+        this, &MainWindow::startScan);
+
+// ✅ 推荐：Lambda表达式处理简单逻辑
+connect(device, &DScannerDevice::scanProgress,
+        [this](int progress) {
+            progressBar->setValue(progress);
+        });
+
+// ✅ 推荐：指定连接类型
+connect(worker, &ScanWorker::finished,
+        this, &MainWindow::onScanComplete,
+        Qt::QueuedConnection);
+
+// ❌ 避免：旧式字符串连接
+connect(button, SIGNAL(clicked()), this, SLOT(onClicked()));
+```
+
+### 2. 元对象系统
+```cpp
+// ✅ 推荐：完整的类声明
+class DScannerDevice : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QString deviceName READ deviceName NOTIFY deviceNameChanged)
+
+public:
+    explicit DScannerDevice(QObject* parent = nullptr);
+
+signals:
+    void deviceNameChanged(const QString& name);
+    void scanCompleted(const QImage& image);
+
+private slots:
+    void onConnectionStateChanged();
+
+private:
+    Q_DISABLE_COPY(DScannerDevice)
+    class Private;
+    QScopedPointer<Private> d_ptr;
+    Q_DECLARE_PRIVATE(DScannerDevice)
+};
+```
+
+### 3. 线程安全
+```cpp
+// ✅ 推荐：使用QMutex保护共享数据
+class DeviceManager
+{
+private:
+    mutable QMutex m_mutex;
+    QList<DScannerDevice*> m_devices;
+
+public:
+    void addDevice(DScannerDevice* device) {
+        QMutexLocker locker(&m_mutex);
+        m_devices.append(device);
+    }
+    
+    QList<DScannerDevice*> devices() const {
+        QMutexLocker locker(&m_mutex);
+        return m_devices;
+    }
+};
+
+// ✅ 推荐：主线程更新UI
+QMetaObject::invokeMethod(this, [this, image]() {
+    imageWidget->setImage(image);
+}, Qt::QueuedConnection);
+```
+
+## DTK特定开发规范
+
+### 1. DTK组件优先使用
+```cpp
+// ✅ 推荐：使用DTK组件
+#include <DWidget>
+#include <DMainWindow>
+#include <DPushButton>
+#include <DComboBox>
+
+class MainWindow : public Dtk::Widget::DMainWindow
+{
+    Q_OBJECT
+
+public:
+    explicit MainWindow(QWidget* parent = nullptr);
+
+private:
+    Dtk::Widget::DWidget* m_centralWidget;
+    Dtk::Widget::DPushButton* m_scanButton;
+    Dtk::Widget::DComboBox* m_deviceCombo;
+};
+
+// ❌ 避免：直接使用Qt原生组件（除非DTK无对应组件）
+QMainWindow* window = new QMainWindow(); // 应使用DMainWindow
+```
+
+### 2. 主题和样式支持
+```cpp
+// ✅ 推荐：支持主题切换
+class DeviceWidget : public DWidget
+{
+public:
+    DeviceWidget(QWidget* parent = nullptr) : DWidget(parent) {
+        // DTK会自动处理主题切换
+        setObjectName("DeviceWidget");
+    }
+
+protected:
+    void paintEvent(QPaintEvent* event) override {
+        // 使用DTK提供的调色板
+        QPainter painter(this);
+        painter.fillRect(rect(), palette().window());
+    }
+};
+```
+
+### 3. DTK应用程序架构
+```cpp
+// ✅ 推荐：DTK应用程序模板
+#include <DApplication>
+#include <DApplicationSettings>
+
+int main(int argc, char* argv[])
+{
+    DApplication app(argc, argv);
+    
+    app.setOrganizationName("eric2023");
+    app.setApplicationName("DeepinScan");
+    app.setApplicationVersion("1.0.0");
+    app.setProductIcon(QIcon(":/icons/deepinscan.svg"));
+    
+    // 自动主题设置
+    DApplicationSettings settings;
+    
+    MainWindow window;
+    window.show();
+    
+    return app.exec();
+}
+```
+
+## 错误处理规范
+
+### 1. 异常设计
+```cpp
+// ✅ 推荐：使用项目特定异常类
+class DScannerException : public std::runtime_error
+{
+public:
+    explicit DScannerException(const QString& message)
+        : std::runtime_error(message.toStdString()) {}
+    
+    virtual QString message() const {
+        return QString::fromStdString(what());
+    }
+};
+
+class DeviceNotFoundException : public DScannerException
+{
+public:
+    explicit DeviceNotFoundException(const QString& deviceId)
+        : DScannerException(QString("Device not found: %1").arg(deviceId)) {}
+};
+```
+
+### 2. 错误传播
+```cpp
+// ✅ 推荐：清晰的错误传播
+bool DScannerDevice::openDevice(const QString& deviceName)
+{
+    try {
+        // 尝试打开设备
+        if (!internalOpenDevice(deviceName)) {
+            emit errorOccurred(tr("Failed to open device: %1").arg(deviceName));
+            return false;
+        }
+        
+        qCInfo(deviceLog) << "Device opened successfully:" << deviceName;
+        return true;
+        
+    } catch (const DScannerException& e) {
+        qCCritical(deviceLog) << "Exception opening device:" << e.message();
+        emit errorOccurred(e.message());
+        return false;
+    }
+}
+```
+
+## 内存管理最佳实践
+
+### 1. RAII原则
+```cpp
+// ✅ 推荐：RAII资源管理
+class DeviceConnection
+{
+public:
+    explicit DeviceConnection(const QString& deviceId) {
+        if (!connectToDevice(deviceId)) {
+            throw DeviceNotFoundException(deviceId);
+        }
+    }
+    
+    ~DeviceConnection() {
+        disconnectDevice();
+    }
+    
+    // 禁止拷贝，支持移动
+    DeviceConnection(const DeviceConnection&) = delete;
+    DeviceConnection& operator=(const DeviceConnection&) = delete;
+    
+    DeviceConnection(DeviceConnection&&) = default;
+    DeviceConnection& operator=(DeviceConnection&&) = default;
+
+private:
+    void disconnectDevice() noexcept {
+        // 确保析构函数不抛异常
+    }
+};
+```
+
+### 2. Qt对象生命周期管理
+```cpp
+// ✅ 推荐：明确的父子关系
+class SettingsDialog : public DDialog
+{
+public:
+    explicit SettingsDialog(QWidget* parent = nullptr)
+        : DDialog(parent)
+    {
+        // 子控件自动由Qt管理
+        auto* layout = new QVBoxLayout(this);
+        auto* devicePage = new DeviceSettingsPage(this);
+        auto* scanPage = new ScanSettingsPage(this);
+        
+        layout->addWidget(devicePage);
+        layout->addWidget(scanPage);
+    }
+    
+    // 析构函数由Qt自动处理子对象清理
+    ~SettingsDialog() override = default;
+};
+```
+
+## 性能优化指导
+
+### 1. 高效的Qt容器使用
+```cpp
+// ✅ 推荐：预分配容器大小
+QList<DeviceInfo> devices;
+devices.reserve(expectedDeviceCount);
+
+// ✅ 推荐：使用隐式共享的优势
+QStringList formats = getImageFormats(); // 返回值优化
+processFormats(formats); // 隐式共享，无额外拷贝
+
+// ✅ 推荐：避免临时对象
+const QString& deviceName = device.name(); // 引用而非拷贝
+```
+
+### 2. 信号槽性能优化
+```cpp
+// ✅ 推荐：批量更新信号
+class DeviceMonitor : public QObject
+{
+private:
+    QTimer* m_updateTimer;
+    QSet<QString> m_changedDevices;
+
+public:
+    DeviceMonitor() {
+        m_updateTimer = new QTimer(this);
+        m_updateTimer->setSingleShot(true);
+        m_updateTimer->setInterval(100); // 100ms批量更新
+        
+        connect(m_updateTimer, &QTimer::timeout,
+                this, &DeviceMonitor::emitBatchUpdate);
+    }
+    
+    void deviceChanged(const QString& deviceId) {
+        m_changedDevices.insert(deviceId);
+        m_updateTimer->start(); // 延迟批量发送
+    }
+
+private slots:
+    void emitBatchUpdate() {
+        if (!m_changedDevices.isEmpty()) {
+            emit devicesChanged(m_changedDevices.values());
+            m_changedDevices.clear();
+        }
+    }
+};
+```
+
+## 代码组织规范
+
+### 1. 头文件组织
+```cpp
+// ✅ 推荐：清晰的头文件结构
+#ifndef DSCANNERDEVICE_H
+#define DSCANNERDEVICE_H
+
+// 1. Qt系统头文件
+#include <QObject>
+#include <QString>
+#include <QImage>
+
+// 2. 项目内部头文件
+#include "Scanner/DScannerGlobal.h"
+#include "Scanner/DScannerTypes.h"
+
+// 3. 前向声明
+class DScannerDevicePrivate;
+
+// 4. 类声明
+class DSCANNER_EXPORT DScannerDevice : public QObject
+{
+    Q_OBJECT
+    // ... 类定义
+    
+private:
+    Q_DECLARE_PRIVATE(DScannerDevice)
+    QScopedPointer<DScannerDevicePrivate> d_ptr;
+};
+
+#endif // DSCANNERDEVICE_H
+```
+
+### 2. 实现文件组织
+```cpp
+// DScannerDevice.cpp
+#include "Scanner/DScannerDevice.h"
+#include "dscannerdevice_p.h"
+
+#include <QLoggingCategory>
+#include <QDebug>
+
+Q_LOGGING_CATEGORY(deviceLog, "deepinscan.device")
+
+// Pimpl实现
+class DScannerDevicePrivate
+{
+public:
+    explicit DScannerDevicePrivate(DScannerDevice* q) : q_ptr(q) {}
+    
+    DScannerDevice* q_ptr;
+    QString deviceId;
+    QString deviceName;
+    bool isConnected = false;
+    
+    Q_DECLARE_PUBLIC(DScannerDevice)
+};
+
+// 公共类实现
+DScannerDevice::DScannerDevice(QObject* parent)
+    : QObject(parent)
+    , d_ptr(new DScannerDevicePrivate(this))
+{
+    qCDebug(deviceLog) << "DScannerDevice created";
+}
+```
+
+这些编码标准确保了代码的一致性、可维护性和性能，同时充分利用了C++17、Qt5和DTK的现代特性。
+description:
+globs:
+alwaysApply: false
+---
