@@ -188,12 +188,16 @@ public:
     void closeDevice() override;
     bool isDeviceOpen() const override;
 
-    ScannerCapabilities getCapabilities() override;
+    ScannerCapabilities getCapabilities() const override;
     bool setScanParameters(const ScanParameters &params) override;
-    ScanParameters getScanParameters() override;
+    ScanParameters getScanParameters() const override;
 
     bool startScan() override;
+    bool startScan(const ScanParameters &params) override;
     void stopScan() override;
+    void cancelScan() override;
+    QByteArray readScanData() override;
+    void cleanup() override;
     bool pauseScan() override;
     bool resumeScan() override;
 

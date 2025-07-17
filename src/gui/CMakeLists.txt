@@ -22,11 +22,6 @@ set(GUI_SOURCES
     widgets/imageprocessingwidget.cpp
     widgets/batchprocesswidget.cpp
     dialogs/settingsdialog.cpp
-    dialogs/aboutdialog.cpp
-    dialogs/devicepropertiesdialog.cpp
-    utils/imageutils.cpp
-    utils/uiutils.cpp
-    utils/thememanager.cpp
 )
 
 # 收集头文件
@@ -39,16 +34,12 @@ set(GUI_HEADERS
     widgets/imageprocessingwidget.h
     widgets/batchprocesswidget.h
     dialogs/settingsdialog.h
-    dialogs/aboutdialog.h
-    dialogs/devicepropertiesdialog.h
-    utils/imageutils.h
-    utils/uiutils.h
-    utils/thememanager.h
+    dialogs/advancedexportdialog.h
 )
 
 # 资源文件
 set(GUI_RESOURCES
-    resources/deepinscan-gui.qrc
+    # ${CMAKE_SOURCE_DIR}/resources/resources.qrc
 )
 
 # 创建可执行文件

@@ -1013,4 +1013,4 @@ int CanonDriverComplete::readCanonScanData(unsigned char *buffer, int size)
     return dataSize;
 }
 
-#include "canon_driver_complete.moc" 
+// #include "canon_driver_complete.moc" 

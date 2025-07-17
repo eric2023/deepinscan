@@ -1,6 +1,7 @@
 #ifndef SANE_OPTION_MANAGER_H
 #define SANE_OPTION_MANAGER_H
 
+#include "Scanner/DScannerGlobal.h"
 #include <QObject>
 #include <QHash>
 #include <QVariant>
@@ -21,7 +22,7 @@ DSCANNER_BEGIN_NAMESPACE
  * - 类型安全的值转换
  * - 线程安全的访问控制
  */
-class SANEOptionManager : public QObject
+class DSCANNER_EXPORT SANEOptionManager : public QObject
 {
     Q_OBJECT
 

@@ -1283,7 +1283,7 @@ void DScannerSANEDriverPrivate::cleanupManagers()
     qDebug() << "DScannerSANEDriverPrivate::cleanupManagers: 管理器清理完成";
 }
 
-#include "dscannersane_p.moc" 
+// #include "dscannersane_p.moc" 
 SANE_Int DScannerSANEDriverPrivate::findSANEOptionIndex(const QString &name)
 {
     if (!p->checkSANEHandle() || name.isEmpty()) {

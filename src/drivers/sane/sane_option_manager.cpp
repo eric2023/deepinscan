@@ -1,5 +1,5 @@
 #include "sane_option_manager.h"
-#include "DScannerGlobal.h"
+#include "Scanner/DScannerGlobal.h"
 #include <QDebug>
 #include <QMutexLocker>
 #include <QThread>
@@ -365,4 +365,4 @@ void SANEOptionManager::cleanupExpiredEntries()
 
 DSCANNER_END_NAMESPACE
 
-#include "sane_option_manager.moc" 
+// #include "sane_option_manager.moc" 
