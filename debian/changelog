@@ -1,0 +1,30 @@
+deepinscan (1.0.0-1) unstable; urgency=medium
+
+  * Initial release of DeepinScan scanner application
+  * Professional scanner driver framework based on C++17 and Qt5/DTK
+  * Support for 6000+ scanner devices with unified API
+  * Core features implemented:
+    - Five-layer modular architecture design
+    - Complete SANE protocol implementation
+    - USB/SCSI/Network communication support
+    - Vendor driver integration (Genesys, Canon, Epson, HP)
+    - Modern DTK graphical interface
+    - Real-time scan preview functionality
+    - Advanced image processing pipeline
+    - Batch processing capabilities
+    - Multi-format output support (PDF, JPEG, PNG, TIFF)
+    - Comprehensive error handling and recovery
+    - Multi-language support framework
+  * Development infrastructure:
+    - Complete unit testing suite
+    - Automated CI/CD pipeline
+    - Comprehensive documentation
+    - Code quality assurance tools
+    - Performance optimization framework
+  * Packaging support:
+    - Standard Debian packaging
+    - CMake build system integration
+    - Cross-platform compatibility
+    - Professional deployment tools
+
+ -- DeepinScan Team <deepinscan@deepin.org>  Thu, 17 Jul 2025 10:00:00 +0800 

@@ -1,0 +1,82 @@
+Source: deepinscan
+Section: graphics
+Priority: optional
+Maintainer: DeepinScan Team <deepinscan@deepin.org>
+Build-Depends: debhelper-compat (= 13),
+               cmake (>= 3.16),
+               pkg-config,
+               qtbase5-dev (>= 5.12),
+               qttools5-dev,
+               libdtkcore-dev (>= 5.0),
+               libdtkwidget-dev (>= 5.0),
+               libdtkgui-dev (>= 5.0),
+               libusb-1.0-0-dev,
+               libsane-dev
+Standards-Version: 4.6.0
+Homepage: https://github.com/deepin-community/deepinscan
+Vcs-Git: https://github.com/deepin-community/deepinscan.git
+Vcs-Browser: https://github.com/deepin-community/deepinscan
+Rules-Requires-Root: no
+
+Package: libdeepinscan1
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Description: Professional scanner library for Deepin Linux
+ DeepinScan is a modern scanner driver framework based on C++17 and Qt5/DTK.
+ This package provides the core library for scanner device management,
+ communication protocols, and image processing.
+ .
+ Key features:
+  * Support for 6000+ scanner devices
+  * Built-in SANE protocol implementation
+  * USB/SCSI/Network communication support
+  * Vendor driver integration (Genesys, Canon, Epson, HP)
+  * Modern five-layer architecture design
+  * High-quality image processing algorithms
+
+Package: libdeepinscan-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: libdeepinscan1 (= ${binary:Version}),
+         ${misc:Depends},
+         qtbase5-dev,
+         libdtkcore-dev,
+         libdtkwidget-dev,
+         libusb-1.0-0-dev
+Description: Development files for DeepinScan library
+ This package contains the header files and development libraries
+ needed to compile applications that use the DeepinScan library.
+ .
+ DeepinScan provides a unified API for scanner device access,
+ configuration, and control across multiple vendor implementations.
+
+Package: deepinscan
+Architecture: any
+Depends: libdeepinscan1 (= ${binary:Version}),
+         ${shlibs:Depends},
+         ${misc:Depends}
+Description: Professional scanner application for Deepin Linux
+ DeepinScan is a modern DTK-based scanner application that provides
+ an intuitive interface for scanning documents and images.
+ .
+ Features:
+  * Modern DTK graphical interface
+  * Real-time scan preview
+  * Batch processing capabilities
+  * Multiple output formats (PDF, JPEG, PNG, TIFF)
+  * Advanced image processing (color correction, noise reduction)
+  * Multi-language support
+  * Device auto-detection and configuration
+
+Package: deepinscan-dbgsym
+Section: debug
+Priority: optional
+Architecture: any
+Depends: deepinscan (= ${binary:Version}),
+         ${misc:Depends}
+Description: Debug symbols for DeepinScan
+ This package contains debug symbols for DeepinScan applications
+ and libraries, useful for debugging and development purposes. 

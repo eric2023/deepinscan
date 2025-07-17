@@ -585,4 +585,341 @@ void DScannerGenesysDriver::onUSBError(const QString &error)
     emit errorOccurred(d->lastError);
 }
 
-// #include "dscannergenesys.moc" 
+// DScannerGenesysDriverPrivate实现
+DScannerGenesysDriverPrivate::DScannerGenesysDriverPrivate(DScannerGenesysDriver *q)
+    : QObject(q)
+    , q_ptr(q)
+    , initialized(false)
+    , lastError()
+    , usbComm(nullptr)
+    , currentDevice(nullptr)
+    , currentDeviceId()
+    , isScanning(false)
+    , registerCacheEnabled(true)
+    , isCalibrated(false)
+    , currentResolution(300)
+    , currentColorMode(ColorMode::Color)
+{
+}
+
+DScannerGenesysDriverPrivate::~DScannerGenesysDriverPrivate()
+{
+    if (currentDevice) {
+        closeUSBDevice();
+    }
+    if (usbComm) {
+        delete usbComm;
+        usbComm = nullptr;
+    }
+}
+
+bool DScannerGenesysDriverPrivate::initializeUSB()
+{
+    // 基础USB初始化实现
+    return true;
+}
+
+void DScannerGenesysDriverPrivate::shutdownUSB()
+{
+    // USB关闭实现
+}
+
+bool DScannerGenesysDriverPrivate::loadDeviceDatabase()
+{
+    // 加载设备数据库的基础实现
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::openUSBDevice(const QString &deviceId)
+{
+    // USB设备打开的基础实现
+    Q_UNUSED(deviceId)
+    return true;
+}
+
+void DScannerGenesysDriverPrivate::closeUSBDevice()
+{
+    // USB设备关闭实现
+}
+
+bool DScannerGenesysDriverPrivate::initializeDevice()
+{
+    // 设备初始化实现
+    return true;
+}
+
+void DScannerGenesysDriverPrivate::shutdownDevice()
+{
+    // 设备关闭实现
+}
+
+DeviceInfo DScannerGenesysDriverPrivate::convertToDeviceInfo(const USBDeviceDescriptor &usbDevice, const GenesysModel &model)
+{
+    // 设备信息转换的基础实现
+    DeviceInfo info;
+    Q_UNUSED(usbDevice)
+    Q_UNUSED(model)
+    return info;
+}
+
+QStringList DScannerGenesysDriverPrivate::getSupportedDeviceNames() const
+{
+    // 返回支持的设备名称列表
+    return QStringList() << "Canon LiDE" << "HP ScanJet" << "Plustek OpticSlim";
+}
+
+ScannerCapabilities DScannerGenesysDriverPrivate::buildCapabilities()
+{
+    // 构建扫描能力的基础实现
+    ScannerCapabilities caps;
+    return caps;
+}
+
+bool DScannerGenesysDriverPrivate::applyScanParameters(const ScanParameters &params)
+{
+    // 应用扫描参数的基础实现
+    Q_UNUSED(params)
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::startScanning()
+{
+    // 开始扫描的基础实现
+    isScanning = true;
+    return true;
+}
+
+void DScannerGenesysDriverPrivate::stopScanning()
+{
+    // 停止扫描的基础实现
+    isScanning = false;
+}
+
+QImage DScannerGenesysDriverPrivate::performPreviewScan()
+{
+    // 预览扫描的基础实现
+    return QImage();
+}
+
+bool DScannerGenesysDriverPrivate::performCalibration()
+{
+    // 校准的基础实现
+    isCalibrated = true;
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::initializeChipset()
+{
+    // 芯片组初始化的基础实现
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::calibrateSensor()
+{
+    // 传感器校准的基础实现
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::setScanArea(const ScanArea &area)
+{
+    // 设置扫描区域的基础实现
+    Q_UNUSED(area)
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::setScanResolution(int resolution)
+{
+    // 设置扫描分辨率的基础实现
+    Q_UNUSED(resolution)
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::setColorMode(ColorMode mode)
+{
+    // 设置颜色模式的基础实现
+    Q_UNUSED(mode)
+    return true;
+}
+
+void DScannerGenesysDriverPrivate::handleUSBData(const QByteArray &data)
+{
+    // USB数据处理的基础实现
+    Q_UNUSED(data)
+}
+
+RegisterOperationResult DScannerGenesysDriverPrivate::performRegisterOperation(int address, bool isWrite, quint8 value, int count)
+{
+    // 寄存器操作的基础实现
+    Q_UNUSED(address)
+    Q_UNUSED(isWrite)
+    Q_UNUSED(value)
+    Q_UNUSED(count)
+    RegisterOperationResult result;
+    result.success = true;
+    return result;
+}
+
+bool DScannerGenesysDriverPrivate::validateScanParameters(const ScanParameters &params)
+{
+    // 扫描参数验证的基础实现
+    Q_UNUSED(params)
+    return true;
+}
+
+GenesysSensor DScannerGenesysDriverPrivate::getDefaultSensor(GenesysChipset chipset)
+{
+    // 获取默认传感器的基础实现
+    Q_UNUSED(chipset)
+    GenesysSensor sensor;
+    return sensor;
+}
+
+// 设备参数管理方法
+bool DScannerGenesysDriverPrivate::setDeviceParameter(const QString &name, const QVariant &value)
+{
+    Q_UNUSED(name)
+    Q_UNUSED(value)
+    return true;
+}
+
+QVariant DScannerGenesysDriverPrivate::getDeviceParameter(const QString &name) const
+{
+    Q_UNUSED(name)
+    return QVariant();
+}
+
+QStringList DScannerGenesysDriverPrivate::getDeviceParameterNames() const
+{
+    return QStringList() << "resolution" << "color_mode" << "scan_area";
+}
+
+// 寄存器操作方法
+quint8 DScannerGenesysDriverPrivate::readRegister(int address)
+{
+    Q_UNUSED(address)
+    return 0;
+}
+
+bool DScannerGenesysDriverPrivate::writeRegister(int address, quint8 value)
+{
+    Q_UNUSED(address)
+    Q_UNUSED(value)
+    return true;
+}
+
+QByteArray DScannerGenesysDriverPrivate::readRegisters(int startAddress, int count)
+{
+    Q_UNUSED(startAddress)
+    Q_UNUSED(count)
+    return QByteArray();
+}
+
+bool DScannerGenesysDriverPrivate::writeRegisters(int startAddress, const QByteArray &values)
+{
+    Q_UNUSED(startAddress)
+    Q_UNUSED(values)
+    return true;
+}
+
+// 芯片组特定初始化方法
+bool DScannerGenesysDriverPrivate::initializeGL646()
+{
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::initializeGL841()
+{
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::initializeGL842()
+{
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::initializeGL843()
+{
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::initializeGL846()
+{
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::initializeGL847()
+{
+    return true;
+}
+
+// 传感器操作方法
+bool DScannerGenesysDriverPrivate::configureSensor()
+{
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::startSensorCalibration()
+{
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::readSensorData(QByteArray &data)
+{
+    Q_UNUSED(data)
+    return true;
+}
+
+// 马达控制方法
+bool DScannerGenesysDriverPrivate::initializeMotor()
+{
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::moveToPosition(int position)
+{
+    Q_UNUSED(position)
+    return true;
+}
+
+bool DScannerGenesysDriverPrivate::setMotorSpeed(int speed)
+{
+    Q_UNUSED(speed)
+    return true;
+}
+
+// 灯管控制方法
+bool DScannerGenesysDriverPrivate::turnOnLamp()
+{
+    return true;
+}
+
+void DScannerGenesysDriverPrivate::turnOffLamp()
+{
+    // 关闭灯管实现
+}
+
+bool DScannerGenesysDriverPrivate::isLampReady()
+{
+    return true;
+}
+
+// 槽函数实现
+void DScannerGenesysDriverPrivate::onUSBDeviceConnected(const USBDeviceDescriptor &descriptor)
+{
+    Q_UNUSED(descriptor)
+    // USB设备连接处理
+}
+
+void DScannerGenesysDriverPrivate::onUSBDeviceDisconnected(const QString &devicePath)
+{
+    Q_UNUSED(devicePath)
+    // USB设备断开处理
+}
+
+void DScannerGenesysDriverPrivate::onUSBError(int errorCode, const QString &errorMessage)
+{
+    Q_UNUSED(errorCode)
+    lastError = errorMessage;
+}
+
+#include "dscannergenesys.moc" 

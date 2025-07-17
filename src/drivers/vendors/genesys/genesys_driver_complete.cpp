@@ -221,8 +221,8 @@ bool GenesysDriverComplete::startScan(const ScanParameters &params)
     qCInfo(dscannerGenesysComplete) << "Starting scan with parameters:"
                                     << "resolution:" << params.resolution
                                     << "colorMode:" << static_cast<int>(params.colorMode)
-                                    << "area:" << params.scanArea.x << params.scanArea.y
-                                    << params.scanArea.width << params.scanArea.height;
+                                                                         << "area:" << params.area.x << params.area.y
+                                     << params.area.width << params.area.height;
     
     // 验证扫描参数
     if (!validateScanParameters(params)) {
@@ -354,17 +354,15 @@ bool GenesysDriverComplete::detectChipsetType()
     // 根据芯片ID确定类型
     switch (chipId) {
     case 0x46:
-        m_chipsetType = GenesysChipsetType::GL646;
-        break;
-    case 0x43:
-        m_chipsetType = GenesysChipsetType::GL843;
-        break;
-    case 0x46: // 注意：GL846可能与GL646有相同的ID，需要进一步检测
+        // GL646和GL846可能有相同的ID，需要进一步检测
         if (detectGL846Features()) {
             m_chipsetType = GenesysChipsetType::GL846;
         } else {
             m_chipsetType = GenesysChipsetType::GL646;
         }
+        break;
+    case 0x43:
+        m_chipsetType = GenesysChipsetType::GL843;
         break;
     case 0x47:
         m_chipsetType = GenesysChipsetType::GL847;
@@ -480,19 +478,19 @@ bool GenesysDriverComplete::readRegister(uint8_t reg, uint8_t &value)
     command.append(reg);
     
     // 发送命令
-    size_t bytesWritten = command.size();
-    if (!m_usbDevice->bulkWrite(reinterpret_cast<const uint8_t*>(command.data()), &bytesWritten)) {
+    int bytesWritten = m_usbDevice->bulkTransferOut(0x01, command);
+    if (bytesWritten < 0) {
         qCWarning(dscannerGenesysComplete) << "Failed to send read register command";
         return false;
     }
     
     // 读取响应
-    uint8_t response;
-    size_t bytesRead = 1;
-    if (!m_usbDevice->bulkRead(0x81, &response, bytesRead)) { // 0x81是输入端点
+    QByteArray responseData = m_usbDevice->bulkTransferIn(0x81, 1); // 0x81是输入端点
+    if (responseData.isEmpty()) {
         qCWarning(dscannerGenesysComplete) << "Failed to read register response";
         return false;
     }
+    uint8_t response = static_cast<uint8_t>(responseData.at(0));
     
     value = response;
     qCDebug(dscannerGenesysComplete) << "Read register" << QString::number(reg, 16) 
@@ -514,8 +512,8 @@ bool GenesysDriverComplete::writeRegister(uint8_t reg, uint16_t value)
     command.append(static_cast<uint8_t>((value >> 8) & 0xFF)); // 高字节
     
     // 发送命令
-    size_t bytesWritten = command.size();
-    if (!m_usbDevice->bulkWrite(reinterpret_cast<const uint8_t*>(command.data()), &bytesWritten)) {
+    int bytesWritten = m_usbDevice->bulkTransferOut(0x01, command);
+    if (bytesWritten < 0) {
         qCWarning(dscannerGenesysComplete) << "Failed to send write register command";
         return false;
     }
@@ -534,8 +532,8 @@ bool GenesysDriverComplete::sendCommand(uint8_t command)
     QByteArray cmdData;
     cmdData.append(command);
     
-    size_t bytesWritten = cmdData.size();
-    bool result = m_usbDevice->bulkWrite(reinterpret_cast<const uint8_t*>(cmdData.data()), &bytesWritten);
+    int bytesWritten = m_usbDevice->bulkTransferOut(0x01, cmdData);
+    bool result = (bytesWritten >= 0);
     
     if (result) {
         qCDebug(dscannerGenesysComplete) << "Sent command:" << QString::number(command, 16);

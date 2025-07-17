@@ -1,0 +1,16 @@
+# Library files
+usr/lib/*/libdeepinscan.so.* usr/lib/
+
+# Development files
+usr/lib/*/libdeepinscan.so usr/lib/
+usr/lib/*/pkgconfig/deepinscan.pc usr/lib/pkgconfig/
+usr/include/Scanner/* usr/include/Scanner/
+
+# Application files
+usr/bin/deepinscan usr/bin/
+
+# Data files
+usr/share/deepinscan/data/* usr/share/deepinscan/data/
+
+# Documentation
+usr/share/doc/deepinscan/* usr/share/doc/deepinscan/ 

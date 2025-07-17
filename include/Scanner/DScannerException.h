@@ -127,6 +127,34 @@ public:
      */
     static QString defaultErrorMessage(ErrorCode code);
 
+    /**
+     * @brief Get detailed error description in Chinese
+     * @param code Error code
+     * @return Detailed error description
+     */
+    static QString getErrorDescription(ErrorCode code);
+
+    /**
+     * @brief Get suggestion for error resolution
+     * @param code Error code
+     * @return Suggestion for resolving the error
+     */
+    static QString getSuggestion(ErrorCode code);
+
+    /**
+     * @brief Check if error is recoverable
+     * @param code Error code
+     * @return True if error can be automatically recovered
+     */
+    static bool isRecoverable(ErrorCode code);
+
+    /**
+     * @brief Get recovery action for recoverable errors
+     * @param code Error code
+     * @return Recovery action description
+     */
+    static QString getRecoveryAction(ErrorCode code);
+
 private:
     ErrorCode m_errorCode;
     QString m_errorMessage;

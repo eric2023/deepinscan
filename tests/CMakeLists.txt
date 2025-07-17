@@ -12,6 +12,10 @@ set(TEST_SOURCES
     test_simd_performance.cpp
     test_memory_optimization.cpp
     test_comprehensive_suite.cpp
+    test_device_discovery.cpp
+    test_scan_workflow.cpp
+    test_image_processing.cpp
+    test_error_handling.cpp
 )
 
 # 为每个测试创建可执行文件

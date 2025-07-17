@@ -1,56 +1,105 @@
-# 构建目录
-/build/
-/bin/
-/lib/
+# SPDX-FileCopyrightText: 2024 DeepinScan Team
+# SPDX-License-Identifier: LGPL-3.0-or-later
 
-# CMake生成文件
-CMakeCache.txt
+# Build directories and outputs
+build/
+build-*/
+.build/
 CMakeFiles/
+CMakeCache.txt
 cmake_install.cmake
-compile_commands.json
 Makefile
-CTestTestfile.cmake
-Testing/
+compile_commands.json
 
-# IDE相关文件
-.vscode/
-.idea/
-*.code-workspace
-*.swp
-*.swo
+# Library files
+*.so
+*.so.*
+*.a
+*.la
+*.pc
 
-# 操作系统生成的文件
-.DS_Store
-Thumbs.db
+# Object files
+*.o
+*.obj
 
-# 临时文件
-*.log
-*.tmp
-*.temp
-*.gch
-*.pch
-
-# 可执行文件
+# Executables
 *.exe
 *.out
 *.app
 
-# 生成的报告
-*_report_* 
-# SpecStory explanation file
-.specstory/.what-is-this.md
+# Qt files
+*.pro.user
+*.pro.user.*
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.qm
 
-# Debian packaging - ignore generated files, not the source configs
-/debian/files
-/debian/substvars
-/debian/tmp
-/debian/deepinscan
-/debian/.debhelper/
-/debian/*.debhelper.log
-/debian/*-stamp
-deepinscan_*.buildinfo
-deepinscan_*.changes
+# IDE files
+.vscode/
+.idea/
+*.creator
+*.creator.user
+*.includes
+*.files
+*.config
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Test results and logs
+test_results/
+*.log
+*.tmp
+
+# Package files
 *.deb
-*.dbgsym.ddeb
-deepinscan_*.tar.gz
-deepinscan_*.dsc
+*.rpm
+*.tar.gz
+*.tar.xz
+*.zip
+
+# Documentation build
+docs/html/
+docs/latex/
+docs/man/
+docs/*.pdf
+
+# Temporary task files (keep milestone reports)
+.task/*.tmp
+.task/temp_*
+.task/*_log_*
+
+# Coverage files
+*.gcno
+*.gcda
+coverage.info
+coverage/
+
+# Debug files
+core
+core.*
+gdb.txt
+*.pdb
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Auto-generated files
+*_moc.cpp
+*_ui.h
+*_qrc.cpp
+
+# Local configuration
+.env
+.local
+
+# System files
+.specstory/.what-is-this.md

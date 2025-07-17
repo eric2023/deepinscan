@@ -56,6 +56,15 @@ public:
     };
 
     /**
+     * @brief 连接类型枚举
+     */
+    enum class ConnectionType {
+        USB,             // USB连接
+        Network,         // 网络连接
+        Unknown          // 未知连接
+    };
+
+    /**
      * @brief Epson设备能力结构
      */
     struct EpsonCapabilities {
@@ -211,6 +220,69 @@ private:
     bool readEpsonDeviceCapabilities();
 
     /**
+     * @brief 设置扫描分辨率
+     * @param resolution 分辨率
+     * @return 是否成功
+     */
+    bool setResolution(int resolution);
+
+    /**
+     * @brief 设置扫描模式
+     * @param mode 扫描模式
+     * @return 是否成功
+     */
+    bool setScanMode(ScanMode mode);
+
+    /**
+     * @brief 设置扫描区域
+     * @param area 扫描区域
+     * @return 是否成功
+     */
+    bool setScanArea(const QRect &area);
+
+    /**
+     * @brief 设置亮度
+     * @param brightness 亮度值
+     * @return 是否成功
+     */
+    bool setBrightness(int brightness);
+
+    /**
+     * @brief 设置对比度
+     * @param contrast 对比度值
+     * @return 是否成功
+     */
+    bool setContrast(int contrast);
+
+    /**
+     * @brief 设置伽马值
+     * @param gamma 伽马值
+     * @return 是否成功
+     */
+    bool setGamma(double gamma);
+
+    /**
+     * @brief 设置自动色彩恢复
+     * @param enabled 是否启用
+     * @return 是否成功
+     */
+    bool setAutoColorRestoration(bool enabled);
+
+    /**
+     * @brief 设置除尘功能
+     * @param enabled 是否启用
+     * @return 是否成功
+     */
+    bool setDustRemoval(bool enabled);
+
+    /**
+     * @brief 设置数字ICE
+     * @param enabled 是否启用
+     * @return 是否成功
+     */
+    bool setDigitalICE(bool enabled);
+
+    /**
      * @brief 配置Epson扫描参数
      * @param params 扫描参数
      * @return 是否成功
@@ -301,14 +373,21 @@ private:
 
     // 设备能力和状态
     EpsonCapabilities m_capabilities;
+    EpsonCapabilities m_deviceCapabilities; // 添加缺失的成员变量
     QVariantMap m_deviceStatus;
     QMap<QString, QVariant> m_currentOptions;
 
     // 扫描状态
     bool m_isScanning;
+    bool m_scanInProgress; // 添加缺失的成员变量
     int m_scanProgress;
     QByteArray m_scanBuffer;
     mutable QMutex m_scanMutex;
+    mutable QMutex m_mutex; // 添加缺失的成员变量
+
+    // 错误处理
+    QString m_lastError; // 添加缺失的成员变量
+    ConnectionType m_connectionType; // 添加连接类型
 
     // Epson特有状态
     bool m_autoColorRestoration;
