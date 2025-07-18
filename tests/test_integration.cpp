@@ -16,7 +16,7 @@
 
 #include <QTest>
 #include <QObject>
-#include <QApplication>
+#include <QCoreApplication>
 #include <QTimer>
 #include <QEventLoop>
 #include <QSignalSpy>

@@ -9,9 +9,9 @@
 #include <QTimer>
 
 // 测试错误处理相关头文件
-#include "include/Scanner/DScannerGlobal.h"
-#include "include/Scanner/DScannerTypes.h"
-#include "include/Scanner/DScannerException.h"
+#include "Scanner/DScannerGlobal.h"
+#include "Scanner/DScannerTypes.h"
+#include "Scanner/DScannerException.h"
 
 using namespace Dtk::Scanner;
 

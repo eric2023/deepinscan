@@ -141,7 +141,7 @@ bool EpsonDriverComplete::initialize()
     m_isConnected = false;
     m_scanInProgress = false;
     m_scanProgress = 0;
-    m_lastError = DScannerError::NoError;
+    m_lastError = "";
     
     qCDebug(epsonDriver) << "Epson驱动初始化完成";
     return true;
@@ -160,13 +160,12 @@ void EpsonDriverComplete::cleanup()
     }
     
     // 清理资源
-    m_currentDeviceInfo = DScannerDeviceInfo();
-    m_usbDevice = nullptr;
+    m_currentDevice = DeviceInfo();
     
     qCDebug(epsonDriver) << "Epson驱动清理完成";
 }
 
-bool EpsonDriverComplete::isDeviceSupported(const DScannerDeviceInfo &deviceInfo)
+bool EpsonDriverComplete::isDeviceSupported(const DeviceInfo &deviceInfo)
 {
     // 检查厂商ID - Epson的USB厂商ID是0x04B8
     if (deviceInfo.vendorId != 0x04B8) {
@@ -186,7 +185,7 @@ bool EpsonDriverComplete::isDeviceSupported(const DScannerDeviceInfo &deviceInfo
     return true; // Epson设备通常可以通过ESC/I协议访问
 }
 
-bool EpsonDriverComplete::connectDevice(const DScannerDeviceInfo &deviceInfo)
+bool EpsonDriverComplete::connectDevice(const DeviceInfo &deviceInfo)
 {
     QMutexLocker locker(&m_mutex);
     
@@ -348,7 +347,7 @@ bool EpsonDriverComplete::setOptionValue(const QString &option, const QVariant &
     QMutexLocker locker(&m_mutex);
     
     if (!m_isConnected) {
-        m_lastError = DScannerError::DeviceNotConnected;
+        m_lastError = "DeviceNotConnected";
         return false;
     }
     
@@ -377,13 +376,13 @@ bool EpsonDriverComplete::setOptionValue(const QString &option, const QVariant &
         success = setDigitalICE(value.toBool());
     } else {
         qCWarning(epsonDriver) << "不支持的选项:" << option;
-        m_lastError = DScannerError::InvalidParameter;
+        m_lastError = "InvalidParameter";
         return false;
     }
     
     if (!success) {
         qCCritical(epsonDriver) << "设置选项失败:" << option;
-        m_lastError = DScannerError::OperationFailed;
+        m_lastError = "OperationFailed";
     }
     
     return success;
@@ -679,9 +678,10 @@ void EpsonDriverComplete::monitorScanProgress()
         m_scanProgress += 10; // 简化的进度更新
         if (m_scanProgress >= 100) {
             m_scanInProgress = false;
-            emit scanCompleted();
+            QImage scannedImage; // 创建一个空图像作为占位符
+            emit scanCompleted(scannedImage);
         } else {
-            emit scanProgressChanged(m_scanProgress);
+            // 继续监控进度
             QTimer::singleShot(500, this, &EpsonDriverComplete::monitorScanProgress);
         }
     }

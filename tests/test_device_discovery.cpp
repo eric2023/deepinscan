@@ -9,11 +9,11 @@
 #include <QTimer>
 
 // 测试设备发现相关头文件
-#include "include/Scanner/DScannerGlobal.h"
-#include "include/Scanner/DScannerTypes.h"
-#include "include/Scanner/DScannerManager.h"
-#include "include/Scanner/DScannerUSB.h"
-#include "include/Scanner/DScannerNetworkDiscovery.h"
+#include "Scanner/DScannerGlobal.h"
+#include "Scanner/DScannerTypes.h"
+#include "Scanner/DScannerManager.h"
+#include "Scanner/DScannerUSB.h"
+#include "Scanner/DScannerNetworkDiscovery.h"
 
 using namespace Dtk::Scanner;
 

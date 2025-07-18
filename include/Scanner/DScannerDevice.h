@@ -99,6 +99,12 @@ public:
     QString deviceName() const;
     
     /**
+     * @brief Get the device name (alias for deviceName)
+     * @return Device name string
+     */
+    QString name() const;
+    
+    /**
      * @brief Get the device manufacturer
      * @return Manufacturer name string
      */

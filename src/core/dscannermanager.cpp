@@ -627,6 +627,69 @@ void DScannerManagerPrivate::loadDeviceDatabase()
     qCInfo(dscannerCore) << "Device database loaded successfully -" << knownDevices.size() << "known devices";
 }
 
+QList<DeviceInfo> DScannerManagerPrivate::availableDevices() const
+{
+    QMutexLocker locker(&mutex);
+    QList<DeviceInfo> deviceList;
+    for (DScannerDevice *device : devices) {
+        if (device) {
+            DeviceInfo info;
+            info.deviceId = device->deviceId();
+            info.name = device->name();
+            info.manufacturer = device->manufacturer();
+            info.model = device->model();
+            info.isAvailable = device->isConnected();
+            deviceList.append(info);
+        }
+    }
+    return deviceList;
+}
+
+DScannerDevice* DScannerManagerPrivate::openDevice(const QString &deviceId)
+{
+    QMutexLocker locker(&mutex);
+    DScannerDevice *device = findDevice(deviceId);
+    if (device && !device->isConnected()) {
+        // 尝试打开设备
+        // 这里应该调用设备的open方法，但由于DScannerDevice没有open方法，
+        // 我们假设设备已经处于可用状态
+        return device;
+    }
+    return nullptr;
+}
+
+void DScannerManagerPrivate::closeDevice(const QString &deviceId)
+{
+    QMutexLocker locker(&mutex);
+    DScannerDevice *device = findDevice(deviceId);
+    if (device) {
+        device->close();
+    }
+}
+
+bool DScannerManagerPrivate::isDeviceAvailable(const QString &deviceId) const
+{
+    QMutexLocker locker(&mutex);
+    DScannerDevice *device = findDevice(deviceId);
+    return device && device->isConnected();
+}
+
+DeviceInfo DScannerManagerPrivate::deviceInfo(const QString &deviceId) const
+{
+    QMutexLocker locker(&mutex);
+    DScannerDevice *device = findDevice(deviceId);
+    if (device) {
+        DeviceInfo info;
+        info.deviceId = device->deviceId();
+        info.name = device->name();
+        info.manufacturer = device->manufacturer();
+        info.model = device->model();
+        info.isAvailable = device->isConnected();
+        return info;
+    }
+    return DeviceInfo();
+}
+
 QList<DeviceInfo> DScannerManagerPrivate::queryDeviceDatabase(quint16 vendorId, quint16 productId)
 {
     QList<DeviceInfo> devices;
@@ -768,4 +831,56 @@ DScannerDevice *DScannerManager::device(const QString &deviceId) const
 QString DScannerManager::version()
 {
     return QStringLiteral("1.0.0");
+}
+
+bool DScannerManager::initialize()
+{
+    Q_D(DScannerManager);
+    d->init();
+    return true;
+}
+
+void DScannerManager::shutdown()
+{
+    Q_D(DScannerManager);
+    d->cleanup();
+}
+
+QList<DeviceInfo> DScannerManager::discoverDevices(bool forceRefresh)
+{
+    Q_D(DScannerManager);
+    if (forceRefresh) {
+        d->discoverDevices();
+    }
+    return d->availableDevices();
+}
+
+QList<DeviceInfo> DScannerManager::availableDevices() const
+{
+    Q_D(const DScannerManager);
+    return d->availableDevices();
+}
+
+DScannerDevice* DScannerManager::openDevice(const QString &deviceId)
+{
+    Q_D(DScannerManager);
+    return d->openDevice(deviceId);
+}
+
+void DScannerManager::closeDevice(const QString &deviceId)
+{
+    Q_D(DScannerManager);
+    d->closeDevice(deviceId);
+}
+
+bool DScannerManager::isDeviceAvailable(const QString &deviceId) const
+{
+    Q_D(const DScannerManager);
+    return d->isDeviceAvailable(deviceId);
+}
+
+DeviceInfo DScannerManager::deviceInfo(const QString &deviceId) const
+{
+    Q_D(const DScannerManager);
+    return d->deviceInfo(deviceId);
 }

@@ -281,7 +281,7 @@ private:
     QList<QNetworkInterface> m_networkInterfaces;   // 网络接口列表
     QList<QNetworkReply*> m_activeReplies;          // 活动网络请求
     
-    QHash<ProtocolType, QStringList> m_supportedProtocols; // 支持的协议
+    QHash<int, QStringList> m_supportedProtocols; // 支持的协议 (使用int代替ProtocolType以避免qHash问题)
     QList<NetworkScannerDevice> m_discoveredDevices;       // 发现的设备
     NetworkDiscoveryStatistics m_statistics;               // 统计信息
 };

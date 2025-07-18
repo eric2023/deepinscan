@@ -105,4 +105,4 @@ void TestDScannerException::testCloneAndRaise()
 }
 
 QTEST_MAIN(TestDScannerException)
-// MOC include removed as it's not needed for this test 
+#include "test_dscannerexception.moc"

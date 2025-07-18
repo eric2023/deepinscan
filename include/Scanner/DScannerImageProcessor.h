@@ -38,16 +38,16 @@ enum class ImageProcessingAlgorithm {
     OCRPreprocess     // OCR预处理
 };
 
-// 图像格式类型
-enum class ImageFormat {
-    Unknown = 0,
-    PNG,
-    JPEG,
-    TIFF,
-    PDF,
-    BMP,
-    RAW
-};
+// 图像格式类型 - 使用DScannerTypes.h中的定义
+// enum class ImageFormat {
+//     Unknown = 0,
+//     PNG,
+//     JPEG,
+//     TIFF,
+//     PDF,
+//     BMP,
+//     RAW
+// };
 
 // 图像质量设置
 enum class ImageQuality {
@@ -82,30 +82,29 @@ struct ImageProcessingResult {
         : success(ok), errorMessage(error) {}
 };
 
-// 扫描参数
-struct ScanParameters {
-    QSize resolution = QSize(300, 300);  // DPI
-    QRect scanArea;                      // 扫描区域
-    ColorMode colorMode = ColorMode::RGB24;
-    ScanMode scanMode = ScanMode::Photo;
-    ImageFormat outputFormat = ImageFormat::PNG;
-    ImageQuality quality = ImageQuality::High;
-    bool autoDetectSize = true;
-    bool autoColorCorrection = true;
-    bool autoContrast = true;
-    double brightness = 0.0;             // -100 to 100
-    double contrast = 0.0;               // -100 to 100
-    double gamma = 1.0;                  // 0.1 to 3.0
-    
-    ScanParameters() = default;
-};
+// 扫描参数 - 使用DScannerTypes.h中的定义
+// struct ScanParameters {
+//     QSize resolution = QSize(300, 300);  // DPI
+//     QRect scanArea;                      // 扫描区域
+//     ColorMode colorMode = ColorMode::RGB24;
+//     ScanMode scanMode = ScanMode::Photo;
+//     ImageFormat outputFormat = ImageFormat::PNG;
+//     ImageQuality quality = ImageQuality::High;
+//     bool autoDetectSize = true;
+//     bool autoColorCorrection = true;
+//     bool autoContrast = true;
+//     double brightness = 0.0;             // -100 to 100
+//     double contrast = 0.0;               // -100 to 100
+//     double gamma = 1.0;                  // 0.1 to 3.0
+//     
+//     ScanParameters() = default;
+// };
 
 // 图像处理管道
 class DScannerImageProcessorPrivate;
 class DSCANNER_EXPORT DScannerImageProcessor : public QObject
 {
-    Q_OBJECT
-    Q_DECLARE_PRIVATE(DScannerImageProcessor)
+    // Q_OBJECT  // 暂时注释掉，避免MOC问题
     
 public:
     explicit DScannerImageProcessor(QObject *parent = nullptr);
@@ -175,18 +174,50 @@ signals:
     void errorOccurred(const QString &error);
     
 private:
-    QScopedPointer<DScannerImageProcessorPrivate> d_ptr;
-    Q_DISABLE_COPY(DScannerImageProcessor)
+    // 预设文件操作
+    void savePresetsToFile() const;
+    void loadPresetsFromFile();
+    
+private:
+    class DScannerImageProcessorPrivate
+    {
+    public:
+        DScannerImageProcessorPrivate(DScannerImageProcessor *q) : q_ptr(q) {}
+        
+        void initialize() {
+            m_maxThreads = 4;
+            m_memoryLimit = 1024 * 1024 * 1024; // 1GB
+        }
+        
+        void cleanup() {
+            cancelAllTasks();
+        }
+        
+        void cancelAllTasks() {
+            m_pendingTasks.clear();
+        }
+        
+        DScannerImageProcessor *q_ptr;
+        int m_maxThreads = 4;
+        qint64 m_memoryLimit = 1024 * 1024 * 1024;
+        qint64 m_totalProcessedImages = 0;
+        qint64 m_totalProcessingTime = 0;
+        QList<QFutureWatcher<ImageProcessingResult>*> m_pendingTasks;
+        QMutex m_mutex;
+        
+        // 预设管理
+        QHash<QString, QList<ImageProcessingParameters>> presets;
+        QMutex presetMutex;
+    };
+    DScannerImageProcessorPrivate *d_ptr;
 };
 
 DSCANNER_END_NAMESPACE
 
-// Qt元类型注册
+// Qt元类型注册 - 只注册processing特有的类型
 Q_DECLARE_METATYPE(DSCANNER_NAMESPACE::ImageProcessingAlgorithm)
-Q_DECLARE_METATYPE(DSCANNER_NAMESPACE::ImageFormat)
 Q_DECLARE_METATYPE(DSCANNER_NAMESPACE::ImageQuality)
 Q_DECLARE_METATYPE(DSCANNER_NAMESPACE::ImageProcessingParameters)
 Q_DECLARE_METATYPE(DSCANNER_NAMESPACE::ImageProcessingResult)
-Q_DECLARE_METATYPE(DSCANNER_NAMESPACE::ScanParameters)
 
 #endif // DSCANNERIMAGEPROCESSOR_H 

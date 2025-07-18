@@ -4,6 +4,7 @@
 # SANE驱动源文件
 set(SANE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/dscannersane.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/dscannersane_p.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sane_option_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sane_api_complete.cpp
 )

@@ -10,11 +10,11 @@
 #include <QImage>
 
 // 测试扫描工作流程相关头文件
-#include "include/Scanner/DScannerGlobal.h"
-#include "include/Scanner/DScannerTypes.h"
-#include "include/Scanner/DScannerManager.h"
-#include "include/Scanner/DScannerDevice.h"
-#include "include/Scanner/DScannerDriver.h"
+#include "Scanner/DScannerGlobal.h"
+#include "Scanner/DScannerTypes.h"
+#include "Scanner/DScannerManager.h"
+#include "Scanner/DScannerDevice.h"
+#include "Scanner/DScannerDriver.h"
 
 using namespace Dtk::Scanner;
 

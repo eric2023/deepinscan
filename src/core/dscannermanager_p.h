@@ -65,6 +65,11 @@ public:
     void addDevice(DScannerDevice *device);
     void removeDevice(const QString &deviceId);
     DScannerDevice *findDevice(const QString &deviceId) const;
+    QList<DeviceInfo> availableDevices() const;
+    DScannerDevice *openDevice(const QString &deviceId);
+    void closeDevice(const QString &deviceId);
+    bool isDeviceAvailable(const QString &deviceId) const;
+    DeviceInfo deviceInfo(const QString &deviceId) const;
     
     // 驱动管理
     void loadDrivers();

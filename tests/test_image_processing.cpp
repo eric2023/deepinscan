@@ -12,9 +12,9 @@
 #include <QPainter>
 
 // 测试图像处理相关头文件
-#include "include/Scanner/DScannerGlobal.h"
-#include "include/Scanner/DScannerTypes.h"
-#include "include/Scanner/DScannerImageProcessor.h"
+#include "Scanner/DScannerGlobal.h"
+#include "Scanner/DScannerTypes.h"
+#include "Scanner/DScannerImageProcessor.h"
 
 using namespace Dtk::Scanner;
 

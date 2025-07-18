@@ -240,6 +240,13 @@ private:
     static QVector<int> calculateHistogramNEON(const QImage &image, int channel);
 #endif
 
+    // Scalar后备实现（当SIMD不可用时）
+    static QImage adjustBrightnessScalar(const QImage &image, double factor);
+    static QImage adjustContrastScalar(const QImage &image, double factor);
+    static QImage convertToGrayscaleScalar(const QImage &image);
+    static QImage gaussianBlurScalar(const QImage &image, int radius, double sigma);
+    static QImage adjustSaturationInHSV(const QImage &hsvImage, double factor);
+
     // 辅助方法
     /**
      * @brief 生成高斯核

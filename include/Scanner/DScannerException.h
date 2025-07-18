@@ -28,9 +28,11 @@ public:
         Unknown = 0,                    ///< Unknown error
         DeviceNotFound,                 ///< Device not found
         DeviceNotAvailable,             ///< Device not available
+        DeviceNotConnected,             ///< Device not connected
         DeviceAlreadyOpen,              ///< Device already open
         DeviceNotOpen,                  ///< Device not open
         DeviceNotReady,                 ///< Device not ready
+        DeviceBusy,                     ///< Device is busy
         DeviceError,                    ///< Device error
         DriverNotFound,                 ///< Driver not found
         DriverError,                    ///< Driver error
@@ -46,9 +48,18 @@ public:
         FileIOError,                    ///< File I/O error
         OutOfMemory,                    ///< Out of memory
         Timeout,                        ///< Operation timeout
+        TimeoutError,                   ///< Timeout error (alias for Timeout)
         PermissionDenied,               ///< Permission denied
+        NetworkError,                   ///< Network error
         ConfigurationError,             ///< Configuration error
         CalibrationError,               ///< Calibration error
+        LicenseError,                   ///< License error
+        DriverLoadError,                ///< Driver load error
+        HardwareError,                  ///< Hardware error
+        IncompatibleDevice,             ///< Incompatible device
+        UnsupportedOperation,           ///< Unsupported operation
+        DataCorruption,                 ///< Data corruption
+        InitializationError,            ///< Initialization error
         NotSupported,                   ///< Operation not supported
         NotImplemented                  ///< Operation not implemented
     };

@@ -352,6 +352,45 @@ private:
      */
     QVariantMap parseEpsonStatusCode(const QString &statusCode);
 
+    // Connection methods
+    bool connectUSBDirect();
+    bool connectESCI();
+    bool connectIPP();
+    bool connectWSD();
+    bool connectNetworkDirect();
+    
+    void disconnectUSBDirect();
+    void disconnectESCI();
+    void disconnectIPP();
+    void disconnectWSD();
+    void disconnectNetworkDirect();
+    
+    // Device monitoring
+    void checkDeviceStatus();
+    void onNetworkReplyFinished(QNetworkReply *reply);
+    
+    // ESCI protocol functions
+    bool sendESCICommand(const QByteArray &command);
+    QByteArray readESCIResponse();
+    void readDeviceCapabilities();
+    void parseCapabilities(const QByteArray &data);
+    bool applyEpsonScanParameters(const ScanParameters &params);
+    void monitorScanProgress();
+    
+    // Data reading functions
+    QByteArray readUSBScanData();
+    QByteArray readESCIScanData();
+    QByteArray readIPPScanData();
+    QByteArray readNetworkScanData();
+    
+    // Network discovery functions
+    void queryAdvancedFeatures();
+    QByteArray buildIPPQueryMessage();
+    
+    // Device series detection
+    EpsonSeries detectDeviceSeries(const DeviceInfo &deviceInfo);
+    EpsonProtocol determineConnectionProtocol(const DeviceInfo &deviceInfo);
+
 private:
     // 设备连接信息
     DeviceInfo m_currentDevice;

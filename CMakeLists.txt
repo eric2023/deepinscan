@@ -51,14 +51,18 @@ qt5_add_resources(RESOURCE_SOURCES ${RESOURCES})
 # 添加子目录
 add_subdirectory(src)
 
-# 添加GUI程序
-add_subdirectory(src/gui)
+# 添加GUI程序 (暂时禁用以专注于核心功能)
+# add_subdirectory(src/gui)
 
 # 添加示例程序
 add_subdirectory(examples)
 
 # 添加测试
 add_subdirectory(tests)
+
+# 暂时禁用GUI和示例，专注于库编译
+# add_subdirectory(src/gui)
+# add_subdirectory(examples)
 
 # 链接库（在子目录中的库创建之后）
 if(TARGET deepinscan)

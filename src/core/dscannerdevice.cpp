@@ -559,4 +559,9 @@ void DScannerDevice::stopPreview()
     d->stopPreviewOperation();
 }
 
-// MOC file include removed as DScannerDevice doesn't have Q_OBJECT macro 
+QString DScannerDevice::name() const
+{
+    return deviceName();
+}
+
+// Implementation completed above 

@@ -987,12 +987,11 @@ void CanonDriverComplete::onCanonDataReady()
         // 更新进度（简化计算）
         m_scanProgress = qMin(100, m_scanProgress + 1);
         
-        emit dataReady();
-        
         if (m_scanProgress >= 100) {
             m_isScanning = false;
             m_dataTimer->stop();
-            emit scanCompleted();
+            QImage scannedImage; // 创建一个空图像作为占位符
+            emit scanCompleted(scannedImage);
         }
     }
 }

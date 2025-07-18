@@ -33,25 +33,6 @@
 class MultithreadedProcessor;
 
 /**
- * @brief 线程工作器类
- */
-class ThreadWorker : public QObject
-{
-    Q_OBJECT
-public:
-    explicit ThreadWorker(int workerId, MultithreadedProcessor *processor);
-    void setThreadAffinity(int cpuCore);
-    
-public slots:
-    void processTask();
-    
-private:
-    int m_workerId;
-    MultithreadedProcessor *m_processor;
-    int m_assignedCore;
-};
-
-/**
  * @brief MultithreadedProcessor 多线程优化的图像处理器
  * 
  * 专门为高性能图像处理设计的多线程处理器，包含以下特性：
@@ -351,7 +332,24 @@ private:
         }
     };
     
-    // ThreadWorker 现在已移至类外定义
+    /**
+     * @brief 线程工作器类
+     */
+    class ThreadWorker : public QObject
+    {
+        // Q_OBJECT  // 暂时注释掉，因为MOC不支持嵌套类
+    public:
+        explicit ThreadWorker(int workerId, MultithreadedProcessor *processor);
+        void setThreadAffinity(int cpuCore);
+        
+    // public slots:  // 暂时注释掉，因为移除了Q_OBJECT
+    //     void processTask();
+        
+    private:
+        int m_workerId;
+        MultithreadedProcessor *m_processor;
+        int m_assignedCore;
+    };
 
 private slots:
     /**

@@ -69,10 +69,12 @@ MultithreadedProcessor::MultithreadedProcessor(QObject *parent)
     m_threadPool->setMaxThreadCount(m_config.maxThreadCount);
     
     // 初始化线程负载统计
-    m_threadLoads.resize(m_config.maxThreadCount);
-    m_threadTimes.resize(m_config.maxThreadCount);
-    std::fill(m_threadLoads.begin(), m_threadLoads.end(), 0);
-    std::fill(m_threadTimes.begin(), m_threadTimes.end(), 0);
+    m_threadLoads.clear();
+    m_threadTimes.clear();
+    for (int i = 0; i < m_config.maxThreadCount; ++i) {
+        m_threadLoads.append(0);
+        m_threadTimes.append(0);
+    }
     
     // 设置性能统计定时器
     m_statsTimer->setSingleShot(false);
@@ -115,10 +117,12 @@ void MultithreadedProcessor::setThreadPoolConfig(const ThreadPoolConfig &config)
     m_threadPool->setMaxThreadCount(config.maxThreadCount);
     
     // 重新初始化线程负载统计
-    m_threadLoads.resize(config.maxThreadCount);
-    m_threadTimes.resize(config.maxThreadCount);
-    std::fill(m_threadLoads.begin(), m_threadLoads.end(), 0);
-    std::fill(m_threadTimes.begin(), m_threadTimes.end(), 0);
+    m_threadLoads.clear();
+    m_threadTimes.clear();
+    for (int i = 0; i < config.maxThreadCount; ++i) {
+        m_threadLoads.append(0);
+        m_threadTimes.append(0);
+    }
     
     qDebug() << "线程池配置更新完成，最大线程数:" << config.maxThreadCount;
 }
