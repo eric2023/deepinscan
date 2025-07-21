@@ -371,7 +371,7 @@ void DImageProcessingWidget::onColorAdjustmentChanged()
 {
     qDebug() << "色彩调整参数变化";
     
-    ImageProcessingParameters params = getCurrentParameters();
+    ImageProcessingUIParameters params = getCurrentParameters();
     emit parametersChanged(params);
     
     if (m_previewButton->isChecked()) {
@@ -383,9 +383,9 @@ void DImageProcessingWidget::onGeometryChanged()
 {
     qDebug() << "几何变换参数变化";
     
-    ImageProcessingParameters params = getCurrentParameters();
+    ImageProcessingUIParameters params = getCurrentParameters();
     emit parametersChanged(params);
-    
+
     if (m_previewButton->isChecked()) {
         emit previewRequested(params);
     }
@@ -449,9 +449,9 @@ void DImageProcessingWidget::onFilterChanged()
                 .arg(m_filterComboBox->currentText())
                 .arg(m_filterIntensity->value());
     
-    ImageProcessingParameters params = getCurrentParameters();
+        ImageProcessingUIParameters params = getCurrentParameters();
     emit parametersChanged(params);
-    
+
     if (m_previewButton->isChecked()) {
         emit previewRequested(params);
     }
@@ -462,7 +462,7 @@ void DImageProcessingWidget::onPreviewToggled(bool enabled)
     qDebug() << QString("实时预览状态: %1").arg(enabled ? "开启" : "关闭");
     
     if (enabled) {
-        ImageProcessingParameters params = getCurrentParameters();
+        ImageProcessingUIParameters params = getCurrentParameters();
         emit previewRequested(params);
     } else {
         emit previewCancelled();
@@ -480,7 +480,7 @@ void DImageProcessingWidget::applyProcessing()
     
     setProcessing(true);
     
-    ImageProcessingParameters params = getCurrentParameters();
+    ImageProcessingUIParameters params = getCurrentParameters();
     emit processingRequested(params);
 }
 
@@ -542,14 +542,14 @@ void DImageProcessingWidget::resetToDefaults()
     
     qDebug() << "参数重置完成";
     
-    ImageProcessingParameters params = getCurrentParameters();
+    ImageProcessingUIParameters params = getCurrentParameters();
     emit parametersChanged(params);
     emit parametersReset();
 }
 
-ImageProcessingParameters DImageProcessingWidget::getCurrentParameters() const
+ImageProcessingUIParameters DImageProcessingWidget::getCurrentParameters() const
 {
-    ImageProcessingParameters params;
+    ImageProcessingUIParameters params;
     
     // 色彩调整参数
     params.brightness = m_brightnessSlider->value();
@@ -570,7 +570,7 @@ ImageProcessingParameters DImageProcessingWidget::getCurrentParameters() const
     return params;
 }
 
-void DImageProcessingWidget::setParameters(const ImageProcessingParameters &params)
+void DImageProcessingWidget::setParameters(const ImageProcessingUIParameters &params)
 {
     qDebug() << "设置图像处理参数";
     
