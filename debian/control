@@ -2,10 +2,10 @@ Source: deepinscan
 Section: graphics
 Priority: optional
 Maintainer: DeepinScan Team <deepinscan@deepin.org>
-Build-Depends: debhelper-compat (= 13),
+Build-Depends: debhelper (>= 9),
                cmake (>= 3.16),
                pkg-config,
-               qtbase5-dev (>= 5.12),
+               qtbase5-dev (>= 5.11),
                qttools5-dev,
                libdtkcore-dev (>= 5.0),
                libdtkwidget-dev (>= 5.0),
@@ -13,9 +13,9 @@ Build-Depends: debhelper-compat (= 13),
                libusb-1.0-0-dev,
                libsane-dev
 Standards-Version: 4.6.0
-Homepage: https://github.com/deepin-community/deepinscan
-Vcs-Git: https://github.com/deepin-community/deepinscan.git
-Vcs-Browser: https://github.com/deepin-community/deepinscan
+Homepage: https://github.com/eric2023/deepinscan
+Vcs-Git: https://github.com/eric2023/deepinscan.git
+Vcs-Browser: https://github.com/eric2023/deepinscan
 Rules-Requires-Root: no
 
 Package: libdeepinscan1

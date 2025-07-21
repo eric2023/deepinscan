@@ -1,0 +1,23 @@
+Package: libdeepinscan1
+Source: deepinscan
+Version: 1.0.0-1
+Architecture: amd64
+Maintainer: DeepinScan Team <deepinscan@deepin.org>
+Installed-Size: 349
+Depends: libc6 (>= 2.14), libgcc1 (>= 1:3.0), libqt5core5a (>= 5.11.0~rc1), libqt5gui5 (>= 5.11), libqt5network5 (>= 5.11), libstdc++6 (>= 5), libusb-1.0-0 (>= 2:1.0.16)
+Section: graphics
+Priority: optional
+Multi-Arch: same
+Homepage: https://github.com/eric2023/deepinscan
+Description: Professional scanner library for Deepin Linux
+ DeepinScan is a modern scanner driver framework based on C++17 and Qt5/DTK.
+ This package provides the core library for scanner device management,
+ communication protocols, and image processing.
+ .
+ Key features:
+  * Support for 6000+ scanner devices
+  * Built-in SANE protocol implementation
+  * USB/SCSI/Network communication support
+  * Vendor driver integration (Genesys, Canon, Epson, HP)
+  * Modern five-layer architecture design
+  * High-quality image processing algorithms

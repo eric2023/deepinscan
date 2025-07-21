@@ -564,4 +564,34 @@ QString DScannerDevice::name() const
     return deviceName();
 }
 
-// Implementation completed above 
+QVariantMap DScannerDevice::parameters() const
+{
+    // 实现参数获取的基础版本
+    QVariantMap params;
+    Q_D(const DScannerDevice);
+    
+    params["deviceId"] = d->deviceInfo.deviceId;
+    params["name"] = d->deviceInfo.name;
+    params["manufacturer"] = d->deviceInfo.manufacturer;
+    params["model"] = d->deviceInfo.model;
+    params["status"] = static_cast<int>(d->status);
+    params["isConnected"] = d->isConnected;
+    params["isReady"] = isReady();
+    
+    return params;
+}
+
+bool DScannerDevice::isPreviewAvailable() const
+{
+    // 基础实现，可以根据设备能力进行扩展
+    return true;
+}
+
+int DScannerDevice::scanProgress() const
+{
+    Q_D(const DScannerDevice);
+    return d->scanProgress;
+}
+
+// Manual MOC inclusion for private class that needs signal processing
+#include "moc_dscannerdevice_p.cpp" 

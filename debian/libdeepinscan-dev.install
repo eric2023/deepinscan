@@ -1,0 +1,3 @@
+usr/lib/libdeepinscan.so
+usr/lib/pkgconfig/deepinscan.pc
+usr/include/Scanner/* 

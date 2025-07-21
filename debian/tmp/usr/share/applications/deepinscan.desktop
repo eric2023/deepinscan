@@ -1,0 +1,17 @@
+[Desktop Entry]
+Name=DeepinScan
+Name[zh_CN]=深度扫描
+Comment=Professional scanner application for Deepin Linux
+Comment[zh_CN]=专业的深度Linux扫描应用程序
+GenericName=Scanner Application
+GenericName[zh_CN]=扫描应用程序
+Keywords=scanner;scan;document;image;photo;
+Keywords[zh_CN]=扫描仪;扫描;文档;图像;照片;
+Exec=deepinscan %F
+Icon=deepinscan
+Terminal=false
+Type=Application
+Categories=Graphics;Office;Scanning;
+MimeType=application/pdf;image/jpeg;image/png;image/tiff;
+StartupNotify=true
+StartupWMClass=deepinscan 

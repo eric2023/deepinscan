@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(deepinscan
     VERSION 1.0.0
     DESCRIPTION "Professional scanner application for Deepin Linux"
-    HOMEPAGE_URL "https://github.com/deepin-community/deepinscan"
+    HOMEPAGE_URL "https://github.com/eric2023/deepinscan"
     LANGUAGES CXX C
 )
 

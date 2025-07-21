@@ -1,0 +1,13 @@
+Package: deepinscan-dbgsym
+Source: deepinscan
+Version: 1.0.0-1
+Architecture: amd64
+Maintainer: DeepinScan Team <deepinscan@deepin.org>
+Installed-Size: 10
+Depends: deepinscan (= 1.0.0-1)
+Section: debug
+Priority: optional
+Homepage: https://github.com/eric2023/deepinscan
+Description: Debug symbols for DeepinScan
+ This package contains debug symbols for DeepinScan applications
+ and libraries, useful for debugging and development purposes.

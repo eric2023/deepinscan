@@ -26,7 +26,16 @@ target_include_directories(deepinscan-minimal
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# 安装规则
+# 安装规则 - 安装为 deepinscan 主应用程序
 install(TARGETS deepinscan-minimal
     DESTINATION bin
-) 
+)
+
+# 创建 deepinscan 符号链接或副本 - 在debian/tmp目录中正确创建
+install(CODE "
+    execute_process(
+        COMMAND \${CMAKE_COMMAND} -E copy_if_different 
+            \${CMAKE_INSTALL_PREFIX}/bin/deepinscan-minimal 
+            \${CMAKE_INSTALL_PREFIX}/bin/deepinscan
+    )
+") 

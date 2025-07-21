@@ -1,0 +1,6 @@
+deepinscan-dbgsym_1.0.0-1_amd64.deb debug optional
+deepinscan_1.0.0-1_amd64.buildinfo graphics optional
+deepinscan_1.0.0-1_amd64.deb graphics optional
+libdeepinscan-dev_1.0.0-1_amd64.deb libdevel optional
+libdeepinscan1-dbgsym_1.0.0-1_amd64.deb debug optional automatic=yes
+libdeepinscan1_1.0.0-1_amd64.deb graphics optional

@@ -1,0 +1,14 @@
+debian/tmp/usr/lib/libdeepinscan.so
+debian/tmp/usr/lib/pkgconfig/deepinscan.pc
+debian/tmp/usr/include/Scanner/DScannerDevice.h
+debian/tmp/usr/include/Scanner/DScannerDriver.h
+debian/tmp/usr/include/Scanner/DScannerException.h
+debian/tmp/usr/include/Scanner/DScannerGenesys.h
+debian/tmp/usr/include/Scanner/DScannerGlobal.h
+debian/tmp/usr/include/Scanner/DScannerImageProcessor.h
+debian/tmp/usr/include/Scanner/DScannerManager.h
+debian/tmp/usr/include/Scanner/DScannerNetworkDiscovery.h
+debian/tmp/usr/include/Scanner/DScannerNetworkDiscovery_Simple.h
+debian/tmp/usr/include/Scanner/DScannerSANE.h
+debian/tmp/usr/include/Scanner/DScannerTypes.h
+debian/tmp/usr/include/Scanner/DScannerUSB.h
