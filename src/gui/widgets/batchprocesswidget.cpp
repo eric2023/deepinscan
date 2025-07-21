@@ -28,10 +28,18 @@
 #include <QDropEvent>
 #include <QUrl>
 #include <QDebug>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QJsonParseError>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
+#include <QUrl>
 
 DWIDGET_USE_NAMESPACE
 
-DBatchProcessWidget::DBatchProcessWidget(QWidget *parent)
+BatchProcessWidget::BatchProcessWidget(QWidget *parent)
     : DWidget(parent)
     , m_isProcessing(false)
     , m_currentTaskIndex(0)
@@ -45,7 +53,7 @@ DBatchProcessWidget::DBatchProcessWidget(QWidget *parent)
     
     // 设置定时器用于更新进度
     m_timer->setInterval(100);
-    connect(m_timer, &QTimer::timeout, this, &DBatchProcessWidget::updateProgress);
+    connect(m_timer, &QTimer::timeout, this, &BatchProcessWidget::updateProgress);
     
     // 启用拖放功能
     setAcceptDrops(true);
@@ -53,13 +61,15 @@ DBatchProcessWidget::DBatchProcessWidget(QWidget *parent)
     qDebug() << "批量处理组件初始化完成";
 }
 
-DBatchProcessWidget::~DBatchProcessWidget()
+BatchProcessWidget::~BatchProcessWidget()
 {
     qDebug() << "销毁批量处理组件";
-    stopProcessing();
+    if (m_isProcessing) {
+        stopProcessing();
+    }
 }
 
-void DBatchProcessWidget::setupUI()
+void BatchProcessWidget::setupUI()
 {
     qDebug() << "设置批量处理界面布局";
     
@@ -90,7 +100,7 @@ void DBatchProcessWidget::setupUI()
     qDebug() << "批量处理界面布局设置完成";
 }
 
-void DBatchProcessWidget::setupFileManagementGroup()
+void BatchProcessWidget::setupFileManagementGroup()
 {
     qDebug() << "设置文件管理组件";
     
@@ -156,7 +166,7 @@ void DBatchProcessWidget::setupFileManagementGroup()
     qDebug() << "文件管理组件设置完成";
 }
 
-void DBatchProcessWidget::setupProcessingSettingsGroup()
+void BatchProcessWidget::setupProcessingSettingsGroup()
 {
     qDebug() << "设置处理设置组件";
     
@@ -228,7 +238,7 @@ void DBatchProcessWidget::setupProcessingSettingsGroup()
     qDebug() << "处理设置组件设置完成";
 }
 
-void DBatchProcessWidget::setupTaskListGroup()
+void BatchProcessWidget::setupTaskListGroup()
 {
     qDebug() << "设置任务列表组件";
     
@@ -274,7 +284,7 @@ void DBatchProcessWidget::setupTaskListGroup()
     qDebug() << "任务列表组件设置完成";
 }
 
-void DBatchProcessWidget::setupProgressGroup()
+void BatchProcessWidget::setupProgressGroup()
 {
     qDebug() << "设置进度监控组件";
     
@@ -323,7 +333,7 @@ void DBatchProcessWidget::setupProgressGroup()
     qDebug() << "进度监控组件设置完成";
 }
 
-void DBatchProcessWidget::setupControlButtons()
+void BatchProcessWidget::setupControlButtons()
 {
     qDebug() << "设置控制按钮";
     
@@ -363,50 +373,50 @@ void DBatchProcessWidget::setupControlButtons()
     qDebug() << "控制按钮设置完成";
 }
 
-void DBatchProcessWidget::connectSignals()
+void BatchProcessWidget::connectSignals()
 {
     qDebug() << "连接批量处理信号";
     
     // 文件管理信号连接
     connect(m_inputBrowseButton, &DPushButton::clicked,
-            this, &DBatchProcessWidget::selectInputDirectory);
+            this, &BatchProcessWidget::selectInputDirectory);
     connect(m_outputBrowseButton, &DPushButton::clicked,
-            this, &DBatchProcessWidget::selectOutputDirectory);
+            this, &BatchProcessWidget::selectOutputDirectory);
     connect(m_fileFilterComboBox, QOverload<const QString &>::of(&DComboBox::currentTextChanged),
-            this, &DBatchProcessWidget::onFileFilterChanged);
+            this, &BatchProcessWidget::onFileFilterChanged);
     
     // 处理设置信号连接
     connect(m_outputFormatComboBox, QOverload<const QString &>::of(&DComboBox::currentTextChanged),
-            this, &DBatchProcessWidget::onOutputFormatChanged);
+            this, &BatchProcessWidget::onOutputFormatChanged);
     connect(m_namingModeComboBox, QOverload<const QString &>::of(&DComboBox::currentTextChanged),
-            this, &DBatchProcessWidget::onNamingModeChanged);
+            this, &BatchProcessWidget::onNamingModeChanged);
     
     // 任务列表信号连接
     connect(m_addFilesButton, &DPushButton::clicked,
-            this, &DBatchProcessWidget::addFiles);
+            this, &BatchProcessWidget::addFiles);
     connect(m_scanDirectoryButton, &DPushButton::clicked,
-            this, &DBatchProcessWidget::scanDirectory);
+            this, &BatchProcessWidget::scanDirectory);
     connect(m_removeSelectedButton, &DPushButton::clicked,
-            this, &DBatchProcessWidget::removeSelectedTasks);
+            this, &BatchProcessWidget::removeSelectedTasks);
     connect(m_clearAllButton, &DPushButton::clicked,
-            this, &DBatchProcessWidget::clearAllTasks);
+            this, &BatchProcessWidget::clearAllTasks);
     
     // 控制按钮信号连接
     connect(m_startButton, &DPushButton::clicked,
-            this, &DBatchProcessWidget::startProcessing);
+            this, &BatchProcessWidget::startProcessing);
     connect(m_pauseButton, &DPushButton::clicked,
-            this, &DBatchProcessWidget::togglePause);
+            this, &BatchProcessWidget::togglePause);
     connect(m_stopButton, &DPushButton::clicked,
-            this, &DBatchProcessWidget::stopProcessing);
+            this, &BatchProcessWidget::stopProcessing);
     connect(m_saveQueueButton, &DPushButton::clicked,
-            this, &DBatchProcessWidget::saveQueue);
+            this, &BatchProcessWidget::saveQueue);
     connect(m_loadQueueButton, &DPushButton::clicked,
-            this, &DBatchProcessWidget::loadQueue);
+            this, &BatchProcessWidget::loadQueue);
     
     qDebug() << "批量处理信号连接完成";
 }
 
-void DBatchProcessWidget::selectInputDirectory()
+void BatchProcessWidget::selectInputDirectory()
 {
     qDebug() << "选择输入目录";
     
@@ -418,7 +428,7 @@ void DBatchProcessWidget::selectInputDirectory()
     }
 }
 
-void DBatchProcessWidget::selectOutputDirectory()
+void BatchProcessWidget::selectOutputDirectory()
 {
     qDebug() << "选择输出目录";
     
@@ -430,13 +440,13 @@ void DBatchProcessWidget::selectOutputDirectory()
     }
 }
 
-void DBatchProcessWidget::onFileFilterChanged(const QString &filter)
+void BatchProcessWidget::onFileFilterChanged(const QString &filter)
 {
     qDebug() << QString("文件过滤器变化: %1").arg(filter);
     // 这里可以添加自定义过滤器的处理逻辑
 }
 
-void DBatchProcessWidget::onOutputFormatChanged(const QString &format)
+void BatchProcessWidget::onOutputFormatChanged(const QString &format)
 {
     qDebug() << QString("输出格式变化: %1").arg(format);
     
@@ -449,7 +459,7 @@ void DBatchProcessWidget::onOutputFormatChanged(const QString &format)
     }
 }
 
-void DBatchProcessWidget::onNamingModeChanged(const QString &mode)
+void BatchProcessWidget::onNamingModeChanged(const QString &mode)
 {
     qDebug() << QString("命名模式变化: %1").arg(mode);
     
@@ -470,7 +480,7 @@ void DBatchProcessWidget::onNamingModeChanged(const QString &mode)
     }
 }
 
-void DBatchProcessWidget::addFiles()
+void BatchProcessWidget::addFiles()
 {
     qDebug() << "添加文件到处理队列";
     
@@ -486,7 +496,7 @@ void DBatchProcessWidget::addFiles()
     qDebug() << QString("添加了 %1 个文件到队列").arg(files.size());
 }
 
-void DBatchProcessWidget::scanDirectory()
+void BatchProcessWidget::scanDirectory()
 {
     qDebug() << "扫描目录中的图像文件";
     
@@ -531,7 +541,7 @@ void DBatchProcessWidget::scanDirectory()
     }
 }
 
-void DBatchProcessWidget::removeSelectedTasks()
+void BatchProcessWidget::removeSelectedTasks()
 {
     qDebug() << "移除选中的任务";
     
@@ -560,7 +570,7 @@ void DBatchProcessWidget::removeSelectedTasks()
     qDebug() << QString("移除了 %1 个任务").arg(selectedItems.size());
 }
 
-void DBatchProcessWidget::clearAllTasks()
+void BatchProcessWidget::clearAllTasks()
 {
     qDebug() << "清空所有任务";
     
@@ -580,7 +590,7 @@ void DBatchProcessWidget::clearAllTasks()
     }
 }
 
-void DBatchProcessWidget::startProcessing()
+void BatchProcessWidget::startProcessing()
 {
     qDebug() << "开始批量处理";
     
@@ -619,7 +629,7 @@ void DBatchProcessWidget::startProcessing()
     qDebug() << QString("开始批量处理 %1 个任务").arg(m_tasks.size());
 }
 
-void DBatchProcessWidget::togglePause()
+void BatchProcessWidget::togglePause()
 {
     qDebug() << "切换暂停状态";
     
@@ -636,7 +646,7 @@ void DBatchProcessWidget::togglePause()
     }
 }
 
-void DBatchProcessWidget::stopProcessing()
+void BatchProcessWidget::stopProcessing()
 {
     qDebug() << "停止批量处理";
     
@@ -652,7 +662,7 @@ void DBatchProcessWidget::stopProcessing()
     }
 }
 
-void DBatchProcessWidget::saveQueue()
+void BatchProcessWidget::saveQueue()
 {
     qDebug() << "保存任务队列";
     
@@ -783,7 +793,7 @@ void DBatchProcessWidget::saveQueue()
     }
 }
 
-void DBatchProcessWidget::loadQueue()
+void BatchProcessWidget::loadQueue()
 {
     qDebug() << "加载任务队列";
     
@@ -795,7 +805,7 @@ void DBatchProcessWidget::loadQueue()
     }
 }
 
-void DBatchProcessWidget::updateProgress()
+void BatchProcessWidget::updateProgress()
 {
     if (!m_isProcessing || m_tasks.isEmpty()) {
         return;
@@ -841,7 +851,7 @@ void DBatchProcessWidget::updateProgress()
     }
 }
 
-void DBatchProcessWidget::updateTaskStats()
+void BatchProcessWidget::updateTaskStats()
 {
     int totalTasks = m_tasks.size();
     int pendingTasks = totalTasks - m_completedTasks - m_failedTasks;
@@ -856,7 +866,7 @@ void DBatchProcessWidget::updateTaskStats()
                 .arg(totalTasks).arg(pendingTasks).arg(m_completedTasks).arg(m_failedTasks);
 }
 
-void DBatchProcessWidget::updateControlButtonsState()
+void BatchProcessWidget::updateControlButtonsState()
 {
     m_startButton->setEnabled(!m_isProcessing);
     m_pauseButton->setEnabled(m_isProcessing);
@@ -870,7 +880,7 @@ void DBatchProcessWidget::updateControlButtonsState()
     m_clearAllButton->setEnabled(!m_isProcessing);
 }
 
-bool DBatchProcessWidget::addTaskToQueue(const QString &filePath)
+bool BatchProcessWidget::addTaskToQueue(const QString &filePath)
 {
     // 检查文件是否已存在
     for (const BatchTask &task : m_tasks) {
@@ -904,7 +914,7 @@ bool DBatchProcessWidget::addTaskToQueue(const QString &filePath)
     return true;
 }
 
-QString DBatchProcessWidget::applyNamingPattern(const QString &originalName) const
+QString BatchProcessWidget::applyNamingPattern(const QString &originalName) const
 {
     QString mode = m_namingModeComboBox->currentText();
     QString pattern = m_namingPatternEdit->text();
@@ -929,7 +939,7 @@ QString DBatchProcessWidget::applyNamingPattern(const QString &originalName) con
     return originalName;
 }
 
-QStringList DBatchProcessWidget::getFileFilters() const
+QStringList BatchProcessWidget::getFileFilters() const
 {
     QString filter = m_fileFilterComboBox->currentText();
     
@@ -948,7 +958,7 @@ QStringList DBatchProcessWidget::getFileFilters() const
     return {"*.*"};
 }
 
-QStringList DBatchProcessWidget::scanDirectoryRecursive(const QString &dirPath, 
+QStringList BatchProcessWidget::scanDirectoryRecursive(const QString &dirPath, 
                                                        const QStringList &nameFilters,
                                                        bool includeSubdirs) const
 {
@@ -973,7 +983,7 @@ QStringList DBatchProcessWidget::scanDirectoryRecursive(const QString &dirPath,
     return files;
 }
 
-BatchProcessingSettings DBatchProcessWidget::getBatchSettings() const
+BatchProcessingSettings BatchProcessWidget::getBatchSettings() const
 {
     BatchProcessingSettings settings;
     settings.inputDirectory = m_inputPathEdit->text();
@@ -991,14 +1001,14 @@ BatchProcessingSettings DBatchProcessWidget::getBatchSettings() const
     return settings;
 }
 
-void DBatchProcessWidget::dragEnterEvent(QDragEnterEvent *event)
+void BatchProcessWidget::dragEnterEvent(QDragEnterEvent *event)
 {
     if (event->mimeData()->hasUrls()) {
         event->acceptProposedAction();
     }
 }
 
-void DBatchProcessWidget::dropEvent(QDropEvent *event)
+void BatchProcessWidget::dropEvent(QDropEvent *event)
 {
     const QMimeData *mimeData = event->mimeData();
     
@@ -1034,9 +1044,9 @@ void DBatchProcessWidget::dropEvent(QDropEvent *event)
     }
 }
 
-bool DBatchProcessWidget::saveTasksToJson(const QString &fileName)
+bool BatchProcessWidget::saveTasksToJson(const QString &fileName)
 {
-    qDebug() << "DBatchProcessWidget::saveTasksToJson: 保存任务到JSON文件" << fileName;
+    qDebug() << "BatchProcessWidget::saveTasksToJson: 保存任务到JSON文件" << fileName;
     
     try {
         QJsonObject rootObject;
@@ -1082,7 +1092,7 @@ bool DBatchProcessWidget::saveTasksToJson(const QString &fileName)
         QFile file(fileName);
         
         if (!file.open(QIODevice::WriteOnly)) {
-            qWarning() << "DBatchProcessWidget::saveTasksToJson: 无法创建文件" << fileName;
+            qWarning() << "BatchProcessWidget::saveTasksToJson: 无法创建文件" << fileName;
             return false;
         }
         
@@ -1090,28 +1100,28 @@ bool DBatchProcessWidget::saveTasksToJson(const QString &fileName)
         file.close();
         
         if (written == -1) {
-            qWarning() << "DBatchProcessWidget::saveTasksToJson: 写入文件失败";
+            qWarning() << "BatchProcessWidget::saveTasksToJson: 写入文件失败";
             return false;
         }
         
-        qDebug() << "DBatchProcessWidget::saveTasksToJson: 成功保存" << m_tasks.size() << "个任务";
+        qDebug() << "BatchProcessWidget::saveTasksToJson: 成功保存" << m_tasks.size() << "个任务";
         return true;
         
     } catch (const std::exception &e) {
-        qWarning() << "DBatchProcessWidget::saveTasksToJson: 异常" << e.what();
+        qWarning() << "BatchProcessWidget::saveTasksToJson: 异常" << e.what();
         return false;
     }
 }
 
-bool DBatchProcessWidget::loadTasksFromJson(const QString &fileName)
+bool BatchProcessWidget::loadTasksFromJson(const QString &fileName)
 {
-    qDebug() << "DBatchProcessWidget::loadTasksFromJson: 从JSON文件加载任务" << fileName;
+    qDebug() << "BatchProcessWidget::loadTasksFromJson: 从JSON文件加载任务" << fileName;
     
     try {
         // 读取文件
         QFile file(fileName);
         if (!file.open(QIODevice::ReadOnly)) {
-            qWarning() << "DBatchProcessWidget::loadTasksFromJson: 无法打开文件" << fileName;
+            qWarning() << "BatchProcessWidget::loadTasksFromJson: 无法打开文件" << fileName;
             return false;
         }
         
@@ -1123,7 +1133,7 @@ bool DBatchProcessWidget::loadTasksFromJson(const QString &fileName)
         QJsonDocument doc = QJsonDocument::fromJson(data, &error);
         
         if (error.error != QJsonParseError::NoError) {
-            qWarning() << "DBatchProcessWidget::loadTasksFromJson: JSON解析错误" << error.errorString();
+            qWarning() << "BatchProcessWidget::loadTasksFromJson: JSON解析错误" << error.errorString();
             return false;
         }
         
@@ -1131,7 +1141,7 @@ bool DBatchProcessWidget::loadTasksFromJson(const QString &fileName)
         
         // 验证格式
         if (!rootObject.contains("metadata") || !rootObject.contains("tasks")) {
-            qWarning() << "DBatchProcessWidget::loadTasksFromJson: 无效的文件格式";
+            qWarning() << "BatchProcessWidget::loadTasksFromJson: 无效的文件格式";
             return false;
         }
         
@@ -1140,7 +1150,7 @@ bool DBatchProcessWidget::loadTasksFromJson(const QString &fileName)
         QString application = metadata["application"].toString();
         
         if (application != "DeepinScan") {
-            qWarning() << "DBatchProcessWidget::loadTasksFromJson: 不兼容的应用程序" << application;
+            qWarning() << "BatchProcessWidget::loadTasksFromJson: 不兼容的应用程序" << application;
             // 可以选择继续或中止，这里选择继续
         }
         
@@ -1193,11 +1203,11 @@ bool DBatchProcessWidget::loadTasksFromJson(const QString &fileName)
         // 更新统计信息
         updateTaskStatistics();
         
-        qDebug() << "DBatchProcessWidget::loadTasksFromJson: 成功加载" << m_tasks.size() << "个任务";
+        qDebug() << "BatchProcessWidget::loadTasksFromJson: 成功加载" << m_tasks.size() << "个任务";
         return true;
         
     } catch (const std::exception &e) {
-        qWarning() << "DBatchProcessWidget::loadTasksFromJson: 异常" << e.what();
+        qWarning() << "BatchProcessWidget::loadTasksFromJson: 异常" << e.what();
         return false;
     }
 } 

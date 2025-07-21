@@ -99,6 +99,18 @@ signals:
      * @param image 要保存的图像
      */
     void saveRequested(const QPixmap &image);
+    
+    /**
+     * @brief 请求保存图像（别名）
+     * @param image 要保存的图像
+     */
+    void imageSaveRequested(const QPixmap &image);
+    
+    /**
+     * @brief 请求图像处理
+     * @param image 要处理的图像
+     */
+    void imageProcessingRequested(const QPixmap &image);
 
 private slots:
     /**

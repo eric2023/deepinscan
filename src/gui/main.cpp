@@ -22,9 +22,8 @@ int main(int argc, char *argv[])
     // 设置日志系统
     QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     QDir().mkpath(logDir);
-    DLogManager::setLogDir(logDir);
-    DLogManager::registerConsoleAppender();
-    DLogManager::registerFileAppender();
+    // 使用QLoggingCategory进行日志管理
+    QLoggingCategory::setFilterRules("*.debug=true");
 
     qDebug() << "深度扫描应用程序启动";
     qDebug() << "版本:" << app.applicationVersion();

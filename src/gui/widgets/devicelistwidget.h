@@ -87,15 +87,27 @@ private slots:
     void onRefreshButtonClicked();
     void onAutoRefreshTimeout();
     void onDeviceDiscovered();
+    void onDeviceDiscovered(const DeviceInfo &device);
     void onDeviceStatusChanged();
+    void onDeviceSelectionChanged();
+    void onDeviceRemoved(const QString &deviceId);
+    void onDeviceConnected(const QString &deviceId);
+    void onDeviceDisconnected(const QString &deviceId);
+    void onDiscoveryFinished();
 
 private:
     void setupUI();
+    void initConnections();
     void setupConnections();
+    void setupRefreshTimer();
     void updateDeviceList();
     void addDeviceItem(const DeviceInfo &device);
     void updateDeviceItem(const DeviceInfo &device);
     void removeDeviceItem(const QString &deviceId);
+    void connectSelectedDevice();
+    void disconnectSelectedDevice();
+    void showDeviceProperties();
+    void updateDeviceListItem(const QString &deviceId);
     
     QListWidgetItem *findDeviceItem(const QString &deviceId);
     void setDeviceItemData(QListWidgetItem *item, const DeviceInfo &device);
@@ -107,9 +119,14 @@ private:
 private:
     // 界面组件
     DListWidget *m_deviceListWidget;
+    DListWidget *m_deviceList;  // 兼容实现文件中的命名
     DPushButton *m_refreshButton;
+    DPushButton *m_connectButton;
+    DPushButton *m_disconnectButton;
+    DPushButton *m_propertiesButton;
     DLabel *m_statusLabel;
     DSpinner *m_loadingSpinner;
+    DSpinner *m_spinner;  // 兼容实现文件中的命名
     QVBoxLayout *m_mainLayout;
     QHBoxLayout *m_buttonLayout;
 
@@ -118,11 +135,13 @@ private:
 
     // 状态管理
     QList<DeviceInfo> m_deviceList;
+    QList<DeviceInfo> m_devices;  // 兼容实现文件中的命名
     QString m_selectedDeviceId;
     bool m_isRefreshing;
     
     // 自动刷新
     QTimer *m_autoRefreshTimer;
+    QTimer *m_refreshTimer;  // 兼容实现文件中的命名
     int m_autoRefreshInterval;
 
     // 设备状态图标

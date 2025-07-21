@@ -7,11 +7,22 @@
 #include <DApplication>
 #include <QTranslator>
 #include <QSettings>
+#include <QSplashScreen>
+#include <QSystemTrayIcon>
 
 DWIDGET_USE_NAMESPACE
 
 class MainWindow;
-class DScannerManager;
+
+// 使用完整命名空间避免冲突
+namespace Dtk {
+namespace Scanner {
+    class DScannerManager;
+    class DScannerImageProcessor;
+    class DScannerNetworkDiscovery;
+    class NetworkCompleteDiscovery;
+}
+}
 
 /**
  * @brief 深度扫描应用程序类
@@ -39,76 +50,81 @@ public:
     void showMainWindow();
 
     /**
-     * @brief 获取应用程序设置
-     * @return 设置对象指针
+     * @brief 隐藏主窗口
      */
-    QSettings *settings() const { return m_settings; }
+    void hideMainWindow();
+
+    /**
+     * @brief 清理资源
+     */
+    void cleanup();
 
     /**
      * @brief 获取扫描仪管理器
      * @return 扫描仪管理器指针
      */
-    DScannerManager *scannerManager() const { return m_scannerManager; }
-
-public slots:
-    /**
-     * @brief 显示关于对话框
-     */
-    void showAbout();
+    Dtk::Scanner::DScannerManager *scannerManager() const;
 
     /**
-     * @brief 显示设置对话框
+     * @brief 获取图像处理器
+     * @return 图像处理器指针
      */
-    void showSettings();
+    Dtk::Scanner::DScannerImageProcessor *imageProcessor() const;
 
     /**
-     * @brief 切换主题
+     * @brief 获取网络发现组件
+     * @return 网络发现组件指针
      */
-    void toggleTheme();
+    Dtk::Scanner::DScannerNetworkDiscovery *networkDiscovery() const;
+
+    /**
+     * @brief 获取主窗口
+     * @return 主窗口指针
+     */
+    MainWindow *mainWindow() const;
+
+    /**
+     * @brief 获取应用实例
+     * @return 应用实例指针
+     */
+    static Application *instance();
 
 private slots:
-    /**
-     * @brief 应用程序即将退出
-     */
-    void onAboutToQuit();
+    // 系统托盘相关
+    void onSystemTrayActivated(QSystemTrayIcon::ActivationReason reason);
+    
+    // 设备管理相关
+    void onDeviceAdded(const QString &deviceId);
+    void onDeviceRemoved(const QString &deviceId);
+    void onScanCompleted(const QString &deviceId, const QString &filePath);
+    void onNetworkDeviceFound(const QString &deviceName, const QString &address);
 
 private:
-    /**
-     * @brief 初始化应用程序属性
-     */
-    void initializeApplication();
-
-    /**
-     * @brief 初始化国际化支持
-     */
-    void initializeTranslations();
-
-    /**
-     * @brief 初始化主题
-     */
-    void initializeTheme();
-
-    /**
-     * @brief 初始化扫描仪管理器
-     */
-    void initializeScannerManager();
-
-    /**
-     * @brief 加载应用程序设置
-     */
-    void loadSettings();
-
-    /**
-     * @brief 保存应用程序设置
-     */
-    void saveSettings();
+    // 初始化方法
+    void showSplashScreen();
+    void updateSplashMessage(const QString &message);
+    bool setupLocalization();
+    bool setupLogging();
+    bool initializeCoreComponents();
+    bool initializeScannerManager();
+    bool initializeImageProcessor();
+    bool initializeNetworkDiscovery();
+    bool initializeSystemTray();
+    bool createMainWindow();
+    void connectSignalsAndSlots();
+    void cleanupCoreComponents();
 
 private:
     MainWindow *m_mainWindow;
-    DScannerManager *m_scannerManager;
-    QSettings *m_settings;
-    QTranslator *m_translator;
-    QTranslator *m_qtTranslator;
+    QSplashScreen *m_splashScreen;
+    QSystemTrayIcon *m_systemTrayIcon;
+    bool m_initialized;
+    bool m_componentsInitialized;
+    
+    // 核心组件
+    Dtk::Scanner::DScannerManager *m_scannerManager;
+    Dtk::Scanner::DScannerImageProcessor *m_imageProcessor;
+    Dtk::Scanner::DScannerNetworkDiscovery *m_networkDiscovery;
 };
 
 #endif // APPLICATION_H 

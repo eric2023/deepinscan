@@ -260,7 +260,8 @@ QWidget *ImagePreviewWidget::createToolBar()
     
     // 缩放滑块和数值框
     m_scaleSlider = new DSlider(Qt::Horizontal, this);
-    m_scaleSlider->setRange(10, 500); // 10% - 500%
+    m_scaleSlider->setMinimum(10);  // 10%
+    m_scaleSlider->setMaximum(500); // 500%
     m_scaleSlider->setValue(100);
     m_scaleSlider->setFixedWidth(150);
     
@@ -459,12 +460,14 @@ void ImagePreviewWidget::onRotateLeftClicked()
 {
     qDebug() << "ImagePreviewWidget: 左转按钮点击";
     rotateImage(-90);
+    emit imageProcessingRequested(m_currentImage);
 }
 
 void ImagePreviewWidget::onRotateRightClicked()
 {
     qDebug() << "ImagePreviewWidget: 右转按钮点击";
     rotateImage(90);
+    emit imageProcessingRequested(m_currentImage);
 }
 
 void ImagePreviewWidget::onSaveClicked()
@@ -488,6 +491,7 @@ void ImagePreviewWidget::onSaveClicked()
             qDebug() << "ImagePreviewWidget: 图像保存成功:" << fileName;
             DMessageBox::information(this, "保存成功", QString("图像已保存到:\n%1").arg(fileName));
             emit saveRequested(m_currentImage);
+            emit imageSaveRequested(m_currentImage);
         } else {
             qWarning() << "ImagePreviewWidget: 图像保存失败:" << fileName;
             DMessageBox::warning(this, "保存失败", "无法保存图像文件");

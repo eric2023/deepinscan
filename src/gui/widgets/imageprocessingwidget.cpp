@@ -91,7 +91,8 @@ void DImageProcessingWidget::setupColorAdjustmentGroup()
     // 亮度控制
     layout->addWidget(new DLabel("亮度:", this), 0, 0);
     m_brightnessSlider = new DSlider(Qt::Horizontal, this);
-    m_brightnessSlider->setRange(-100, 100);
+    m_brightnessSlider->setMinimum(-100);
+    m_brightnessSlider->setMaximum(100);
     m_brightnessSlider->setValue(0);
     m_brightnessSlider->setToolTip("调整图像亮度 (-100 到 100)");
     layout->addWidget(m_brightnessSlider, 0, 1);
@@ -105,7 +106,8 @@ void DImageProcessingWidget::setupColorAdjustmentGroup()
     // 对比度控制
     layout->addWidget(new DLabel("对比度:", this), 1, 0);
     m_contrastSlider = new DSlider(Qt::Horizontal, this);
-    m_contrastSlider->setRange(-100, 100);
+    m_contrastSlider->setMinimum(-100);
+    m_contrastSlider->setMaximum(100);
     m_contrastSlider->setValue(0);
     m_contrastSlider->setToolTip("调整图像对比度 (-100 到 100)");
     layout->addWidget(m_contrastSlider, 1, 1);
@@ -119,7 +121,8 @@ void DImageProcessingWidget::setupColorAdjustmentGroup()
     // 饱和度控制
     layout->addWidget(new DLabel("饱和度:", this), 2, 0);
     m_saturationSlider = new DSlider(Qt::Horizontal, this);
-    m_saturationSlider->setRange(-100, 100);
+    m_saturationSlider->setMinimum(-100);
+    m_saturationSlider->setMaximum(100);
     m_saturationSlider->setValue(0);
     m_saturationSlider->setToolTip("调整图像饱和度 (-100 到 100)");
     layout->addWidget(m_saturationSlider, 2, 1);
@@ -133,7 +136,8 @@ void DImageProcessingWidget::setupColorAdjustmentGroup()
     // 伽马控制
     layout->addWidget(new DLabel("伽马:", this), 3, 0);
     m_gammaSlider = new DSlider(Qt::Horizontal, this);
-    m_gammaSlider->setRange(50, 300);
+    m_gammaSlider->setMinimum(50);
+    m_gammaSlider->setMaximum(300);
     m_gammaSlider->setValue(100);
     m_gammaSlider->setToolTip("调整图像伽马值 (0.5 到 3.0)");
     layout->addWidget(m_gammaSlider, 3, 1);
@@ -158,7 +162,8 @@ void DImageProcessingWidget::setupGeometryGroup()
     // 旋转角度
     layout->addWidget(new DLabel("旋转:", this), 0, 0);
     m_rotationSlider = new DSlider(Qt::Horizontal, this);
-    m_rotationSlider->setRange(-180, 180);
+    m_rotationSlider->setMinimum(-180);
+    m_rotationSlider->setMaximum(180);
     m_rotationSlider->setValue(0);
     m_rotationSlider->setToolTip("旋转图像角度 (-180° 到 180°)");
     layout->addWidget(m_rotationSlider, 0, 1);
@@ -172,7 +177,8 @@ void DImageProcessingWidget::setupGeometryGroup()
     // 水平缩放
     layout->addWidget(new DLabel("水平缩放:", this), 1, 0);
     m_scaleXSlider = new DSlider(Qt::Horizontal, this);
-    m_scaleXSlider->setRange(10, 500);
+    m_scaleXSlider->setMinimum(10);
+    m_scaleXSlider->setMaximum(500);
     m_scaleXSlider->setValue(100);
     m_scaleXSlider->setToolTip("水平方向缩放比例 (10% 到 500%)");
     layout->addWidget(m_scaleXSlider, 1, 1);
@@ -186,7 +192,8 @@ void DImageProcessingWidget::setupGeometryGroup()
     // 垂直缩放
     layout->addWidget(new DLabel("垂直缩放:", this), 2, 0);
     m_scaleYSlider = new DSlider(Qt::Horizontal, this);
-    m_scaleYSlider->setRange(10, 500);
+    m_scaleYSlider->setMinimum(10);
+    m_scaleYSlider->setMaximum(500);
     m_scaleYSlider->setValue(100);
     m_scaleYSlider->setToolTip("垂直方向缩放比例 (10% 到 500%)");
     layout->addWidget(m_scaleYSlider, 2, 1);
@@ -242,7 +249,8 @@ void DImageProcessingWidget::setupFilterGroup()
     intensityLayout->addWidget(new DLabel("强度:", this));
     
     m_filterIntensity = new DSlider(Qt::Horizontal, this);
-    m_filterIntensity->setRange(0, 100);
+    m_filterIntensity->setMinimum(0);
+    m_filterIntensity->setMaximum(100);
     m_filterIntensity->setValue(50);
     m_filterIntensity->setToolTip("调整滤镜效果强度 (0% 到 100%)");
     intensityLayout->addWidget(m_filterIntensity);

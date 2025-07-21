@@ -1,7 +1,8 @@
 # 网络通信层源文件 - 使用基础实现
 set(NETWORK_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/dscannernetworkdiscovery_simple_impl.cpp
-    # 暂时只启用基础实现，避免私有类问题
+    # 使用桩实现解决链接问题，避免复杂的私有类依赖
+    ${CMAKE_CURRENT_SOURCE_DIR}/dscannernetworkdiscovery_simple_stubs.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/dscannernetworkdiscovery_simple_impl.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/dscannernetworkdiscovery_simple.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/dscannernetworkdiscovery.cpp  
     # ${CMAKE_CURRENT_SOURCE_DIR}/network_complete_discovery.cpp

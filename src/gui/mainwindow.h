@@ -13,8 +13,17 @@
 #include <QSplitter>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QPushButton>
+#include <QProgressBar>
+#include <QLabel>
+#include <QComboBox>
+#include <QFormLayout>
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
 
 #include "Scanner/DScannerManager.h"
+#include "Scanner/DScannerImageProcessor.h"
+#include "Scanner/DScannerNetworkDiscovery.h"
 #include "Scanner/DScannerDevice.h"
 #include "Scanner/DScannerTypes.h"
 
@@ -24,7 +33,7 @@ using namespace Dtk::Scanner;
 class DeviceListWidget;
 class ScanControlWidget;
 class ImagePreviewWidget;
-class ImageProcessingWidget;
+class DImageProcessingWidget;
 class BatchProcessWidget;
 class AdvancedExportDialog;
 
@@ -52,6 +61,24 @@ public:
      * @brief 关闭应用程序前的清理工作
      */
     void cleanup();
+
+    /**
+     * @brief 设置扫描仪管理器（组件注入）
+     * @param manager 扫描仪管理器实例
+     */
+    void setScannerManager(Dtk::Scanner::DScannerManager *manager);
+    
+    /**
+     * @brief 设置图像处理器（组件注入）
+     * @param processor 图像处理器实例
+     */
+    void setImageProcessor(Dtk::Scanner::DScannerImageProcessor *processor);
+    
+    /**
+     * @brief 设置网络发现组件（组件注入）
+     * @param discovery 网络发现组件实例
+     */
+    void setNetworkDiscovery(Dtk::Scanner::DScannerNetworkDiscovery *discovery);
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -105,11 +132,26 @@ private:
     void updateBatchProcessingStatus();
     void showMessage(const QString &message, int timeout = 3000);
     void showErrorMessage(const QString &error);
+    
+    /**
+     * @brief 验证组件注入状态
+     */
+    void validateComponentInjection();
+    
+    /**
+     * @brief 配置子组件
+     */
+    void configureWidgetComponents();
+    
+    /**
+     * @brief 激活扫描功能
+     */
+    void enableScanningCapabilities();
 
 private:
     // 核心组件
-    DScannerManager *m_scannerManager;
-    DScannerDevice *m_currentDevice;
+    Dtk::Scanner::DScannerManager *m_scannerManager;
+    Dtk::Scanner::DScannerDevice *m_currentDevice;
 
     // 主界面组件
     DWidget *m_centralWidget;
@@ -120,7 +162,7 @@ private:
     DeviceListWidget *m_deviceList;
     ScanControlWidget *m_scanControl;
     ImagePreviewWidget *m_imagePreview;
-    ImageProcessingWidget *m_imageProcessing;
+    DImageProcessingWidget *m_imageProcessing;
     BatchProcessWidget *m_batchProcess;
 
     // 界面控制
@@ -141,6 +183,29 @@ private:
         ProcessingMode = 2      // 图像处理模式
     };
     ViewMode m_currentViewMode;
+    
+    // 扫描界面控件
+    QPushButton *m_previewButton;
+    QPushButton *m_scanButton;
+    QProgressBar *m_progressBar;
+    QLabel *m_statusLabel;
+    QLabel *m_previewLabel;
+    QComboBox *m_resolutionCombo;
+    QComboBox *m_modeCombo;
+    
+    // 界面组件指针
+    QWidget *m_imagePreviewWidget;
+    QWidget *m_batchProcessWidget;
+    QWidget *m_deviceListWidget;
+    QWidget *m_scanControlWidget;
+    
+    // 当前扫描图像
+    QImage m_previewImage;
+    
+    // 新增：组件注入支持
+    Dtk::Scanner::DScannerImageProcessor *m_injectedImageProcessor;
+    Dtk::Scanner::DScannerNetworkDiscovery *m_injectedNetworkDiscovery;
+    bool m_componentsInjected;
 };
 
 #endif // MAINWINDOW_H 

@@ -79,27 +79,25 @@ ScanParameters ScanControlWidget::getScanParameters() const
     // 基本参数
     params.resolution = m_resolutionCombo->currentData().toInt();
     params.colorMode = static_cast<ColorMode>(m_colorModeCombo->currentData().toInt());
-    params.scanSource = static_cast<ScanSource>(m_scanSourceCombo->currentData().toInt());
+    // ScanParameters中没有scanSource字段，暂时注释掉
+    // params.scanSource = static_cast<ScanSource>(m_scanSourceCombo->currentData().toInt());
     params.format = static_cast<ImageFormat>(m_formatCombo->currentData().toInt());
     
     // 扫描区域
-    params.scanArea.x = m_xSpinBox->value();
-    params.scanArea.y = m_ySpinBox->value();
-    params.scanArea.width = m_widthSpinBox->value();
-    params.scanArea.height = m_heightSpinBox->value();
+    params.area.x = m_xSpinBox->value();
+    params.area.y = m_ySpinBox->value();
+    params.area.width = m_widthSpinBox->value();
+    params.area.height = m_heightSpinBox->value();
     
     // 图像增强
     params.brightness = m_brightnessSlider->value();
     params.contrast = m_contrastSlider->value();
     params.gamma = m_gammaSlider->value() / 100.0;
-    params.autoColorCorrection = m_autoColorCorrection->isChecked();
-    params.dustRemoval = m_dustRemoval->isChecked();
-    params.noiseReduction = m_noiseReduction->isChecked();
+    // 使用实际存在的字段
+    params.denoiseEnabled = m_noiseReduction->isChecked();
     
     // 高级设置
     params.quality = m_qualitySpinBox->value();
-    params.multiSampling = m_multiSamplingCheck->isChecked();
-    params.batchCount = m_batchCountSpinBox->value();
     
     return params;
 }
@@ -123,12 +121,15 @@ void ScanControlWidget::setScanParameters(const ScanParameters &params)
         }
     }
     
+    // ScanParameters中没有scanSource字段，暂时注释掉
+    /*
     for (int i = 0; i < m_scanSourceCombo->count(); ++i) {
         if (m_scanSourceCombo->itemData(i).toInt() == static_cast<int>(params.scanSource)) {
             m_scanSourceCombo->setCurrentIndex(i);
             break;
         }
     }
+    */
     
     for (int i = 0; i < m_formatCombo->count(); ++i) {
         if (m_formatCombo->itemData(i).toInt() == static_cast<int>(params.format)) {
@@ -138,23 +139,20 @@ void ScanControlWidget::setScanParameters(const ScanParameters &params)
     }
     
     // 扫描区域
-    m_xSpinBox->setValue(params.scanArea.x);
-    m_ySpinBox->setValue(params.scanArea.y);
-    m_widthSpinBox->setValue(params.scanArea.width);
-    m_heightSpinBox->setValue(params.scanArea.height);
+    m_xSpinBox->setValue(params.area.x);
+    m_ySpinBox->setValue(params.area.y);
+    m_widthSpinBox->setValue(params.area.width);
+    m_heightSpinBox->setValue(params.area.height);
     
     // 图像增强
     m_brightnessSlider->setValue(params.brightness);
     m_contrastSlider->setValue(params.contrast);
     m_gammaSlider->setValue(static_cast<int>(params.gamma * 100));
-    m_autoColorCorrection->setChecked(params.autoColorCorrection);
-    m_dustRemoval->setChecked(params.dustRemoval);
-    m_noiseReduction->setChecked(params.noiseReduction);
+    // 使用实际存在的字段
+    m_noiseReduction->setChecked(params.denoiseEnabled);
     
     // 高级设置
     m_qualitySpinBox->setValue(params.quality);
-    m_multiSamplingCheck->setChecked(params.multiSampling);
-    m_batchCountSpinBox->setValue(params.batchCount);
 }
 
 void ScanControlWidget::setEnabled(bool enabled)
@@ -179,18 +177,15 @@ void ScanControlWidget::resetToDefaults()
     ScanParameters defaultParams;
     defaultParams.resolution = 300;
     defaultParams.colorMode = ColorMode::Color;
-    defaultParams.scanSource = ScanSource::Flatbed;
+    // ScanParameters中没有scanSource字段，暂时注释掉
+    // defaultParams.scanSource = ScanSource::Flatbed;
     defaultParams.format = ImageFormat::JPEG;
-    defaultParams.scanArea = {0.0, 0.0, 210.0, 297.0}; // A4尺寸
+    defaultParams.area = {0.0, 0.0, 210.0, 297.0}; // A4尺寸
     defaultParams.brightness = 0;
     defaultParams.contrast = 0;
     defaultParams.gamma = 1.0;
-    defaultParams.autoColorCorrection = true;
-    defaultParams.dustRemoval = false;
-    defaultParams.noiseReduction = true;
+    defaultParams.denoiseEnabled = true;
     defaultParams.quality = 80;
-    defaultParams.multiSampling = false;
-    defaultParams.batchCount = 1;
     
     setScanParameters(defaultParams);
 }
@@ -295,9 +290,10 @@ QWidget *ScanControlWidget::createBasicSettingsGroup()
     
     // 扫描源设置
     m_scanSourceCombo = new DComboBox(this);
-    m_scanSourceCombo->addItem("平板", static_cast<int>(ScanSource::Flatbed));
-    m_scanSourceCombo->addItem("自动进纸器", static_cast<int>(ScanSource::ADF));
-    m_scanSourceCombo->addItem("透明材料适配器", static_cast<int>(ScanSource::Transparency));
+    // 暂时使用整数值，因为ScanSource类型不存在
+    m_scanSourceCombo->addItem("平板", 0);  // ScanSource::Flatbed
+    m_scanSourceCombo->addItem("自动进纸器", 1);  // ScanSource::ADF  
+    m_scanSourceCombo->addItem("透明材料适配器", 2);  // ScanSource::Transparency
     m_scanSourceCombo->setCurrentIndex(0); // 默认平板
     layout->addRow("扫描源:", m_scanSourceCombo);
     
@@ -394,21 +390,24 @@ QWidget *ScanControlWidget::createImageEnhancementGroup()
     // 亮度调节
     layout->addWidget(new DLabel("亮度:", this), 0, 0);
     m_brightnessSlider = new DSlider(Qt::Horizontal, this);
-    m_brightnessSlider->setRange(-100, 100);
+    m_brightnessSlider->setMinimum(-100);
+    m_brightnessSlider->setMaximum(100);
     m_brightnessSlider->setValue(0);
     layout->addWidget(m_brightnessSlider, 0, 1, 1, 2);
     
     // 对比度调节
     layout->addWidget(new DLabel("对比度:", this), 1, 0);
     m_contrastSlider = new DSlider(Qt::Horizontal, this);
-    m_contrastSlider->setRange(-100, 100);
+    m_contrastSlider->setMinimum(-100);
+    m_contrastSlider->setMaximum(100);
     m_contrastSlider->setValue(0);
     layout->addWidget(m_contrastSlider, 1, 1, 1, 2);
     
     // 伽马调节
     layout->addWidget(new DLabel("伽马:", this), 2, 0);
     m_gammaSlider = new DSlider(Qt::Horizontal, this);
-    m_gammaSlider->setRange(10, 300);
+    m_gammaSlider->setMinimum(10);
+    m_gammaSlider->setMaximum(300);
     m_gammaSlider->setValue(100);
     layout->addWidget(m_gammaSlider, 2, 1, 1, 2);
     

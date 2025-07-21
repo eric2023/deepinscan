@@ -198,6 +198,55 @@ private slots:
      */
     void updateUIState();
 
+    // 添加缺失的槽函数
+    void onFileFilterChanged(const QString &filter);
+    void onOutputFormatChanged(const QString &format);
+    void onNamingModeChanged(const QString &mode);
+
+private:
+    // UI设置方法
+    void setupUI();
+    void setupFileManagementGroup();
+    void setupProcessingSettingsGroup();
+    void setupTaskListGroup();
+    void setupProgressGroup();
+    void setupControlButtons();
+    void connectSignals();
+    
+    // 文件操作方法
+    void selectInputDirectory();
+    void selectOutputDirectory();
+    void addFiles();
+    void scanDirectory();
+    
+    // 任务管理方法
+    void removeSelectedTasks();
+    void clearAllTasks();
+    void startProcessing();
+    void togglePause();
+    void stopProcessing();
+    void saveQueue();
+    void loadQueue();
+    
+    // 状态更新方法
+    void updateProgress();
+    void updateTaskStats();
+    void updateControlButtonsState();
+    
+    // 辅助方法
+    bool addTaskToQueue(const QString &filePath);
+    QString applyNamingPattern(const QString &originalName) const;
+    QStringList getFileFilters() const;
+    QStringList scanDirectoryRecursive(const QString &dirPath, const QStringList &filters, bool recursive) const;
+    
+    // 文件操作
+    bool saveTasksToJson(const QString &filePath);
+    bool loadTasksFromJson(const QString &filePath);
+
+protected:
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
+
 private:
     /**
      * @brief 初始化用户界面
@@ -290,6 +339,7 @@ private:
     // 任务列表
     DListWidget *m_taskList;
     QList<BatchItem> m_batchItems;
+    QList<BatchItem> m_tasks;  // 兼容实现文件中的命名
     QQueue<QString> m_processingQueue;
 
     // 输出设置控件
@@ -319,9 +369,13 @@ private:
     QString m_currentItemId;
     int m_completedCount;
     int m_totalCount;
+    int m_currentTaskIndex;
+    int m_completedTasks;
+    int m_failedTasks;
 
     // 定时器
     QTimer *m_processTimer;
+    QTimer *m_timer;
 };
 
 #endif // BATCHPROCESSWIDGET_H 

@@ -9,10 +9,10 @@
 #include "widgets/batchprocesswidget.h"
 #include "dialogs/settingsdialog.h"
 #include "dialogs/aboutdialog.h"
+#include "dialogs/advancedexportdialog.h"
 
 #include <DApplication>
 #include <DMenu>
-#include <DAction>
 #include <DMessageBox>
 #include <DDialog>
 #include <DLabel>
@@ -45,6 +45,20 @@ MainWindow::MainWindow(QWidget *parent)
     , m_isInitialized(false)
     , m_isScanInProgress(false)
     , m_currentViewMode(SingleScanMode)
+    , m_previewButton(nullptr)
+    , m_scanButton(nullptr)
+    , m_progressBar(nullptr)
+    , m_statusLabel(nullptr)
+    , m_previewLabel(nullptr)
+    , m_resolutionCombo(nullptr)
+    , m_modeCombo(nullptr)
+    , m_imagePreviewWidget(nullptr)
+    , m_batchProcessWidget(nullptr)
+    , m_deviceListWidget(nullptr)
+    , m_scanControlWidget(nullptr)
+    , m_injectedImageProcessor(nullptr)
+    , m_injectedNetworkDiscovery(nullptr)
+    , m_componentsInjected(false)
 {
     setWindowTitle(tr("DeepinScan - 专业扫描仪应用"));
     setWindowIcon(QIcon(":/icons/deepinscan.svg"));
@@ -88,6 +102,11 @@ bool MainWindow::initialize()
         setupUI();
         setupConnections();
         
+        // 新增：如果组件已注入，立即配置
+        if (m_componentsInjected) {
+            configureWidgetComponents();
+        }
+        
         // 加载设置
         loadSettings();
         
@@ -121,7 +140,7 @@ void MainWindow::cleanup()
 
     // 停止扫描
     if (m_isScanInProgress && m_currentDevice) {
-        m_currentDevice->cancelScan();
+        m_currentDevice->pauseScan(); // DScannerDevice没有cancelScan方法，使用pauseScan
     }
 
     // 关闭当前设备
@@ -186,7 +205,7 @@ void MainWindow::setupUI()
     m_deviceList = new DeviceListWidget(this);
     m_scanControl = new ScanControlWidget(this);
     m_imagePreview = new ImagePreviewWidget(this);
-    m_imageProcessing = new ImageProcessingWidget(this);
+    m_imageProcessing = new DImageProcessingWidget(this);
     m_batchProcess = new BatchProcessWidget(this);
 
     // 创建右侧面板
@@ -228,8 +247,17 @@ void MainWindow::setupMenuBar()
 
     // 文件菜单
     DMenu *fileMenu = new DMenu(tr("文件(&F)"), this);
-    fileMenu->addAction(tr("新建扫描(&N)"), this, &MainWindow::onScanRequested, QKeySequence::New);
-    fileMenu->addAction(tr("批量扫描(&B)"), this, &MainWindow::onBatchScanRequested, QKeySequence("Ctrl+B"));
+    fileMenu->addAction(tr("新建扫描(&N)"), this, [this]() {
+        // 使用默认扫描参数
+        ScanParameters defaultParams;
+        defaultParams.resolution = 300;
+        defaultParams.colorMode = ColorMode::Color;
+        defaultParams.format = ImageFormat::PNG;
+        onScanRequested(defaultParams);
+    }, QKeySequence::New);
+    fileMenu->addAction(tr("批量扫描(&B)"), this, [this]() {
+        onBatchScanRequested();
+    }, QKeySequence("Ctrl+B"));
     fileMenu->addSeparator();
     fileMenu->addAction(tr("保存图像(&S)"), this, &MainWindow::onImageSaveRequested, QKeySequence::Save);
     fileMenu->addAction(tr("导出(&E)"), this, &MainWindow::onImageExportRequested, QKeySequence("Ctrl+E"));
@@ -244,14 +272,15 @@ void MainWindow::setupMenuBar()
     deviceMenu->addAction(tr("设备属性(&P)"), this, [this]() {
         if (m_currentDevice) {
             // 显示设备属性对话框 - 完整的设备属性显示
-    qCDebug(dscannerMainWindow) << "显示设备属性对话框";
+    qDebug() << "显示设备属性对话框";
     
     if (!m_scannerManager) {
         QMessageBox::warning(this, tr("错误"), tr("扫描仪管理器未初始化"));
         return;
     }
     
-    auto currentDevice = m_scannerManager->getCurrentDevice();
+    // 获取当前设备 - 如果有已选择的设备ID，使用已打开的设备
+    auto currentDevice = m_currentDevice;
     if (!currentDevice) {
         QMessageBox::warning(this, tr("错误"), tr("未选择扫描设备"));
         return;
@@ -273,15 +302,29 @@ void MainWindow::setupMenuBar()
     QWidget *basicInfoTab = new QWidget();
     QFormLayout *basicLayout = new QFormLayout(basicInfoTab);
     
-    DScannerDeviceInfo deviceInfo = currentDevice->getDeviceInfo();
+    DeviceInfo deviceInfo = currentDevice->deviceInfo();
     basicLayout->addRow(tr("设备名称:"), new QLabel(deviceInfo.name));
     basicLayout->addRow(tr("制造商:"), new QLabel(deviceInfo.manufacturer));
     basicLayout->addRow(tr("型号:"), new QLabel(deviceInfo.model));
-    basicLayout->addRow(tr("设备ID:"), new QLabel(deviceInfo.id));
-    basicLayout->addRow(tr("连接类型:"), new QLabel(deviceInfo.connectionType));
-    basicLayout->addRow(tr("设备类型:"), new QLabel(deviceInfo.type == DScannerDeviceInfo::FlatbedScanner ? tr("平板扫描仪") :
-                                                  deviceInfo.type == DScannerDeviceInfo::DocumentScanner ? tr("文档扫描仪") :
-                                                  deviceInfo.type == DScannerDeviceInfo::NetworkScanner ? tr("网络扫描仪") : tr("未知")));
+    basicLayout->addRow(tr("设备ID:"), new QLabel(deviceInfo.deviceId));
+    basicLayout->addRow(tr("连接类型:"), new QLabel(deviceInfo.connectionString));
+    // 根据驱动类型显示设备类型
+    QString deviceTypeStr;
+    switch (deviceInfo.driverType) {
+        case DriverType::SANE:
+            deviceTypeStr = tr("SANE扫描仪");
+            break;
+        case DriverType::Genesys:
+            deviceTypeStr = tr("Genesys扫描仪");
+            break;
+        case DriverType::Generic:
+            deviceTypeStr = tr("通用扫描仪");
+            break;
+        default:
+            deviceTypeStr = tr("未知类型");
+            break;
+    }
+    basicLayout->addRow(tr("设备类型:"), new QLabel(deviceTypeStr));
     basicLayout->addRow(tr("设备状态:"), new QLabel(deviceInfo.isAvailable ? tr("可用") : tr("不可用")));
     
     tabWidget->addTab(basicInfoTab, tr("基本信息"));
@@ -293,7 +336,7 @@ void MainWindow::setupMenuBar()
     QTreeWidget *capTree = new QTreeWidget();
     capTree->setHeaderLabels({tr("属性"), tr("值")});
     
-    QVariantMap capabilities = currentDevice->getCapabilities();
+    ScannerCapabilities caps = currentDevice->capabilities();
     
     auto addTreeItem = [&](QTreeWidgetItem *parent, const QString &key, const QVariant &value) {
         QTreeWidgetItem *item = new QTreeWidgetItem();
@@ -326,9 +369,39 @@ void MainWindow::setupMenuBar()
         }
     };
     
-    for (auto it = capabilities.begin(); it != capabilities.end(); ++it) {
-        addTreeItem(nullptr, it.key(), it.value());
+    // 手动添加ScannerCapabilities的各个字段
+    QStringList resolutions;
+    for (int res : caps.supportedResolutions) {
+        resolutions << QString::number(res);
     }
+    addTreeItem(nullptr, tr("支持的分辨率"), resolutions.join(", "));
+    
+    QStringList colorModes;
+    for (ColorMode mode : caps.supportedColorModes) {
+        switch (mode) {
+            case ColorMode::Lineart: colorModes << tr("黑白"); break;
+            case ColorMode::Grayscale: colorModes << tr("灰度"); break;
+            case ColorMode::Color: colorModes << tr("彩色"); break;
+        }
+    }
+    addTreeItem(nullptr, tr("支持的颜色模式"), colorModes.join(", "));
+    
+    QStringList formats;
+    for (ImageFormat fmt : caps.supportedFormats) {
+        switch (fmt) {
+            case ImageFormat::PNG: formats << "PNG"; break;
+            case ImageFormat::JPEG: formats << "JPEG"; break;
+            case ImageFormat::TIFF: formats << "TIFF"; break;
+            case ImageFormat::BMP: formats << "BMP"; break;
+            case ImageFormat::PDF: formats << "PDF"; break;
+        }
+    }
+    addTreeItem(nullptr, tr("支持的格式"), formats.join(", "));
+    
+    addTreeItem(nullptr, tr("最大扫描区域"), QString("%1x%2mm").arg(caps.maxScanArea.width).arg(caps.maxScanArea.height));
+    addTreeItem(nullptr, tr("有ADF"), caps.hasADF ? tr("是") : tr("否"));
+    addTreeItem(nullptr, tr("支持双面"), caps.hasDuplex ? tr("是") : tr("否"));
+    addTreeItem(nullptr, tr("有预览"), caps.hasPreview ? tr("是") : tr("否"));
     
     capTree->expandAll();
     capLayout->addWidget(capTree);
@@ -338,22 +411,37 @@ void MainWindow::setupMenuBar()
     QWidget *connectionTab = new QWidget();
     QFormLayout *connLayout = new QFormLayout(connectionTab);
     
-    if (deviceInfo.properties.contains("vendorId")) {
-        connLayout->addRow(tr("供应商ID:"), new QLabel(QString("0x%1")
-                          .arg(deviceInfo.properties.value("vendorId").toUInt(), 4, 16, QChar('0'))));
+    // DeviceInfo没有properties字段，使用现有字段显示连接信息
+    if (!deviceInfo.manufacturer.isEmpty()) {
+        connLayout->addRow(tr("制造商:"), new QLabel(deviceInfo.manufacturer));
     }
-    if (deviceInfo.properties.contains("productId")) {
-        connLayout->addRow(tr("产品ID:"), new QLabel(QString("0x%1")
-                          .arg(deviceInfo.properties.value("productId").toUInt(), 4, 16, QChar('0'))));
+    if (!deviceInfo.model.isEmpty()) {
+        connLayout->addRow(tr("型号:"), new QLabel(deviceInfo.model));
     }
-    if (deviceInfo.properties.contains("serialNumber")) {
-        connLayout->addRow(tr("序列号:"), new QLabel(deviceInfo.properties.value("serialNumber").toString()));
+    if (!deviceInfo.serialNumber.isEmpty()) {
+        connLayout->addRow(tr("序列号:"), new QLabel(deviceInfo.serialNumber));
     }
-    if (deviceInfo.properties.contains("protocol")) {
-        connLayout->addRow(tr("通信协议:"), new QLabel(deviceInfo.properties.value("protocol").toString()));
+    
+    // 显示通信协议
+    QString protocolStr;
+    switch (deviceInfo.protocol) {
+        case CommunicationProtocol::USB:
+            protocolStr = tr("USB");
+            break;
+        case CommunicationProtocol::Network:
+            protocolStr = tr("网络");
+            break;
+        case CommunicationProtocol::Serial:
+            protocolStr = tr("串口");
+            break;
+        default:
+            protocolStr = tr("未知");
+            break;
     }
-    if (deviceInfo.properties.contains("addresses")) {
-        QStringList addresses = deviceInfo.properties.value("addresses").toStringList();
+    connLayout->addRow(tr("通信协议:"), new QLabel(protocolStr));
+    
+    if (!deviceInfo.connectionString.isEmpty()) {
+        QStringList addresses = {deviceInfo.connectionString};
         connLayout->addRow(tr("网络地址:"), new QLabel(addresses.join(", ")));
     }
     
@@ -364,10 +452,11 @@ void MainWindow::setupMenuBar()
     QVBoxLayout *optLayout = new QVBoxLayout(optionsTab);
     
     QListWidget *optionsList = new QListWidget();
-    QStringList supportedOptions = currentDevice->getSupportedOptions();
+    QVariantMap params = currentDevice->parameters();
+    QStringList supportedOptions = params.keys();
     for (const QString &option : supportedOptions) {
         QListWidgetItem *item = new QListWidgetItem(option);
-        QVariant optionValue = currentDevice->getOptionValue(option);
+        QVariant optionValue = currentDevice->parameter(option);
         if (optionValue.isValid()) {
             item->setText(QString("%1: %2").arg(option).arg(optionValue.toString()));
         }
@@ -390,8 +479,8 @@ void MainWindow::setupMenuBar()
     
     // 连接按钮信号
     connect(refreshButton, &QPushButton::clicked, [=]() {
-        // 刷新设备信息
-        currentDevice->updateDeviceInfo();
+        // 刷新设备信息 - 重新获取设备信息
+        DeviceInfo refreshedInfo = currentDevice->deviceInfo();
         QMessageBox::information(propertiesDialog, tr("提示"), tr("设备信息已刷新"));
     });
     
@@ -436,11 +525,20 @@ void MainWindow::setupToolBar()
 
     // 添加工具栏按钮
     m_toolBar->addAction(QIcon::fromTheme("document-new"), tr("新建扫描"), 
-                        this, &MainWindow::onScanRequested);
+                        this, [this]() {
+                            // 使用默认扫描参数
+                            ScanParameters defaultParams;
+                            defaultParams.resolution = 300;
+                            defaultParams.colorMode = ColorMode::Color;
+                            defaultParams.format = ImageFormat::PNG;
+                            onScanRequested(defaultParams);
+                        });
     m_toolBar->addAction(QIcon::fromTheme("view-preview"), tr("预览"), 
                         this, [this]() {
                             if (m_scanControl) {
-                                m_scanControl->requestPreview();
+                                // 修复：获取扫描参数并发射预览请求
+                                ScanParameters params = m_scanControl->getScanParameters();
+                                onPreviewRequested(params);
                             }
                         });
     m_toolBar->addSeparator();
@@ -483,7 +581,7 @@ void MainWindow::setupConnections()
                 this, &MainWindow::onScanRequested);
         connect(m_scanControl, &ScanControlWidget::previewRequested,
                 this, &MainWindow::onPreviewRequested);
-        connect(m_scanControl, &ScanControlWidget::scanCancelled,
+        connect(m_scanControl, &ScanControlWidget::cancelScanRequested,
                 this, &MainWindow::onScanCancelled);
     }
 
@@ -497,10 +595,10 @@ void MainWindow::setupConnections()
 
     // 扫描仪管理器连接
     if (m_scannerManager) {
-        connect(m_scannerManager, &DScannerManager::deviceConnected,
-                this, &MainWindow::onDeviceConnected);
-        connect(m_scannerManager, &DScannerManager::deviceDisconnected,
-                this, &MainWindow::onDeviceDisconnected);
+            connect(m_scannerManager, &DScannerManager::deviceOpened,
+            this, &MainWindow::onDeviceConnected);
+    connect(m_scannerManager, &DScannerManager::deviceClosed,
+            this, &MainWindow::onDeviceDisconnected);
     }
 }
 
@@ -580,7 +678,7 @@ void MainWindow::onDeviceSelected(const DeviceInfo &device)
             // 连接设备信号
             connect(m_currentDevice, &DScannerDevice::scanCompleted,
                     this, &MainWindow::onScanCompleted);
-            connect(m_currentDevice, &DScannerDevice::scanProgress,
+            connect(m_currentDevice, QOverload<int>::of(&DScannerDevice::scanProgress),
                     this, &MainWindow::onScanProgress);
             
             // 更新界面状态
@@ -591,6 +689,9 @@ void MainWindow::onDeviceSelected(const DeviceInfo &device)
             if (m_scanControl) {
                 m_scanControl->setCurrentDevice(m_currentDevice);
             }
+            
+            // 新增：启用扫描功能
+            enableScanningCapabilities();
         } else {
             showErrorMessage(tr("无法连接到设备: %1").arg(device.name));
         }
@@ -666,7 +767,7 @@ void MainWindow::onPreviewRequested(const ScanParameters &params)
     qDebug() << "Starting preview scan";
     
     // 实现预览扫描 - 完整的预览扫描功能
-    qCDebug(dscannerMainWindow) << "开始预览扫描";
+    qDebug() << "开始预览扫描";
     
     if (!m_scannerManager) {
         QMessageBox::warning(this, tr("错误"), tr("扫描仪管理器未初始化"));
@@ -674,20 +775,19 @@ void MainWindow::onPreviewRequested(const ScanParameters &params)
     }
     
     // 获取当前选中的设备
-    auto currentDevice = m_scannerManager->getCurrentDevice();
+    auto currentDevice = m_currentDevice;
     if (!currentDevice) {
         QMessageBox::warning(this, tr("错误"), tr("未选择扫描设备"));
         return;
     }
     
     // 设置预览扫描参数
-    DScannerScanParameters previewParams;
+    ScanParameters previewParams;
     previewParams.resolution = 150;  // 预览使用低分辨率
-    previewParams.mode = ScanMode::Color;
-    previewParams.source = ScanSource::Flatbed;
-    previewParams.scanArea = QRect(0, 0, 2550, 3300); // A4尺寸 (150 DPI)
+    previewParams.colorMode = ColorMode::Color;
     previewParams.format = ImageFormat::JPEG;
-    previewParams.quality = 75;
+    // 设置A4尺寸扫描区域 (150 DPI)
+    previewParams.area = {0, 0, 210, 297}; // A4 in mm
     
     // 从界面获取用户设置
     if (m_resolutionCombo) {
@@ -698,16 +798,16 @@ void MainWindow::onPreviewRequested(const ScanParameters &params)
     if (m_modeCombo) {
         QString modeText = m_modeCombo->currentText();
         if (modeText == tr("黑白")) {
-            previewParams.mode = ScanMode::Lineart;
+            previewParams.colorMode = ColorMode::Lineart;
         } else if (modeText == tr("灰度")) {
-            previewParams.mode = ScanMode::Gray;
+            previewParams.colorMode = ColorMode::Grayscale;
         } else {
-            previewParams.mode = ScanMode::Color;
+            previewParams.colorMode = ColorMode::Color;
         }
     }
     
     // 设置预览标志
-    previewParams.isPreview = true;
+    // previewParams.isPreview = true; // ScanParameters没有isPreview字段
     
     // 禁用预览按钮，启用进度指示
     m_previewButton->setEnabled(false);
@@ -719,18 +819,18 @@ void MainWindow::onPreviewRequested(const ScanParameters &params)
     m_statusLabel->setText(tr("正在进行预览扫描..."));
     
     // 连接扫描信号
-    connect(currentDevice.get(), &DScannerDevice::scanStarted, this, [this]() {
-        qCDebug(dscannerMainWindow) << "预览扫描开始";
+    connect(m_currentDevice, &DScannerDevice::scanStarted, this, [this]() {
+        qDebug() << "预览扫描开始";
         m_statusLabel->setText(tr("预览扫描进行中..."));
     });
     
-    connect(currentDevice.get(), &DScannerDevice::scanProgress, this, [this](int progress) {
+    connect(m_currentDevice, QOverload<int>::of(&DScannerDevice::scanProgress), this, [this](int progress) {
         m_progressBar->setValue(progress);
         m_statusLabel->setText(tr("预览扫描进度: %1%").arg(progress));
     });
     
-    connect(currentDevice.get(), &DScannerDevice::scanCompleted, this, [this](const QByteArray &data) {
-        qCDebug(dscannerMainWindow) << "预览扫描完成，数据大小:" << data.size();
+    connect(m_currentDevice, &DScannerDevice::scanCompleted, this, [this](const QImage &image) {
+        qDebug() << "预览扫描完成，图像大小:" << image.size();
         
         // 恢复预览按钮
         m_previewButton->setEnabled(true);
@@ -738,18 +838,17 @@ void MainWindow::onPreviewRequested(const ScanParameters &params)
         m_progressBar->setVisible(false);
         m_statusLabel->setText(tr("预览扫描完成"));
         
-        // 处理预览图像数据
-        QImage previewImage;
-        if (previewImage.loadFromData(data)) {
+        // 处理预览图像
+        if (!image.isNull()) {
             // 在预览区域显示图像
             if (m_previewLabel) {
-                QPixmap pixmap = QPixmap::fromImage(previewImage);
+                QPixmap pixmap = QPixmap::fromImage(image);
                 QSize labelSize = m_previewLabel->size();
                 QPixmap scaledPixmap = pixmap.scaled(labelSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
                 m_previewLabel->setPixmap(scaledPixmap);
                 
                 // 保存原始预览图像用于裁剪
-                m_previewImage = previewImage;
+                m_previewImage = image;
                 
                 // 启用扫描按钮
                 if (m_scanButton) {
@@ -764,11 +863,11 @@ void MainWindow::onPreviewRequested(const ScanParameters &params)
         }
         
         // 断开连接
-        currentDevice.get()->disconnect(this);
+        m_currentDevice->disconnect(this);
     });
     
-    connect(currentDevice.get(), &DScannerDevice::errorOccurred, this, [this](const QString &error) {
-        qCWarning(dscannerMainWindow) << "预览扫描错误:" << error;
+    connect(m_currentDevice, QOverload<const QString &>::of(&DScannerDevice::errorOccurred), this, [this](const QString &error) {
+        qWarning() << "预览扫描错误:" << error;
         
         // 恢复预览按钮
         m_previewButton->setEnabled(true);
@@ -779,7 +878,7 @@ void MainWindow::onPreviewRequested(const ScanParameters &params)
         QMessageBox::critical(this, tr("预览错误"), tr("预览扫描失败: %1").arg(error));
         
         // 断开连接
-        currentDevice.get()->disconnect(this);
+        m_currentDevice->disconnect(this);
     });
     
     // 开始预览扫描
@@ -798,7 +897,7 @@ void MainWindow::onPreviewRequested(const ScanParameters &params)
 void MainWindow::onScanCancelled()
 {
     if (m_currentDevice && m_isScanInProgress) {
-        m_currentDevice->cancelScan();
+        m_currentDevice->pauseScan(); // DScannerDevice没有cancelScan方法，使用pauseScan
         m_isScanInProgress = false;
         updateScanStatus();
         showMessage(tr("扫描已取消"));
@@ -815,7 +914,7 @@ void MainWindow::onScanCompleted(const QImage &image)
         
         // 在预览组件中显示图像
         if (m_imagePreview) {
-            m_imagePreview->setImage(image);
+            m_imagePreview->setPreviewImage(QPixmap::fromImage(image));
         }
         
         showMessage(tr("扫描完成"));
@@ -843,7 +942,7 @@ void MainWindow::onImageProcessingRequested()
     
     // 设置要处理的图像
     if (m_imageProcessing) {
-        m_imageProcessing->setImage(m_currentImage);
+        m_imageProcessing->setSourceImage(QPixmap::fromImage(m_currentImage));
     }
 }
 
@@ -873,8 +972,8 @@ void MainWindow::onImageExportRequested()
     
     // 获取当前扫描的图像
     QList<QImage> images;
-    if (m_imagePreviewWidget && !m_imagePreviewWidget->getCurrentImage().isNull()) {
-        images.append(m_imagePreviewWidget->getCurrentImage());
+    if (m_imagePreview && !m_imagePreview->getPreviewImage().isNull()) {
+        images.append(m_imagePreview->getPreviewImage().toImage());
     }
     
     if (images.isEmpty()) {
@@ -883,21 +982,24 @@ void MainWindow::onImageExportRequested()
     }
     
     // 创建高级导出对话框
-    AdvancedExportDialog *exportDialog = new AdvancedExportDialog(images, this);
+    Dtk::Scanner::AdvancedExportDialog *exportDialog = new Dtk::Scanner::AdvancedExportDialog(this);
+    // 设置要导出的图像
+    exportDialog->setImages(images);
     
     // 连接信号
-    connect(exportDialog, &AdvancedExportDialog::exportStarted,
+    connect(exportDialog, &Dtk::Scanner::AdvancedExportDialog::exportStarted,
             this, [this]() {
                 showMessage(tr("开始导出..."));
                 setEnabled(false);
             });
             
-    connect(exportDialog, &AdvancedExportDialog::exportProgress,
-            this, [this](int progress, const QString &currentFile) {
-                showMessage(tr("导出进度: %1% - %2").arg(progress).arg(currentFile));
+    connect(exportDialog, &Dtk::Scanner::AdvancedExportDialog::exportProgress,
+            this, [this](int current, int total) {
+                int progress = total > 0 ? (current * 100 / total) : 0;
+                showMessage(tr("导出进度: %1% (%2/%3)").arg(progress).arg(current).arg(total));
             });
             
-    connect(exportDialog, &AdvancedExportDialog::exportFinished,
+    connect(exportDialog, &Dtk::Scanner::AdvancedExportDialog::exportFinished,
             this, [this](bool success, const QStringList &outputFiles) {
                 setEnabled(true);
                 if (success) {
@@ -907,7 +1009,7 @@ void MainWindow::onImageExportRequested()
                 }
             });
             
-    connect(exportDialog, &AdvancedExportDialog::exportError,
+    connect(exportDialog, &Dtk::Scanner::AdvancedExportDialog::exportError,
             this, [this](const QString &error) {
                 setEnabled(true);
                 showMessage(tr("导出错误: %1").arg(error));
@@ -941,7 +1043,7 @@ void MainWindow::onBatchProcessingRequested()
     onViewModeChanged(BatchScanMode);
     
     // 启动批量处理流程
-    m_batchProcessWidget->startBatchProcessing();
+    m_batchProcess->startBatchProcessing();
     
     // 显示状态信息
     showMessage(tr("批量处理已启动，请查看批量处理面板"));
@@ -1023,12 +1125,12 @@ void MainWindow::updateDeviceStatus()
         deviceInfo = m_currentDevice->deviceName();
         
         // 检查设备状态
-        if (m_currentDevice->isOpen()) {
+        if (m_currentDevice->isConnected()) {
             deviceStatus = tr("已连接");
             
             // 获取设备详细信息
-            QString deviceModel = m_currentDevice->deviceModel();
-            QString deviceVendor = m_currentDevice->deviceVendor();
+            QString deviceModel = m_currentDevice->model();
+            QString deviceVendor = m_currentDevice->manufacturer();
             
             if (!deviceModel.isEmpty() && !deviceVendor.isEmpty()) {
                 deviceInfo = QString("%1 - %2 %3").arg(deviceStatus).arg(deviceVendor).arg(deviceModel);
@@ -1060,11 +1162,12 @@ void MainWindow::updateDeviceStatus()
     }
     
     // 更新设备列表显示
-    m_deviceListWidget->updateDeviceStatus();
+    m_deviceList->refreshDeviceList();
     
     // 更新扫描控制面板
-    if (m_scanControlWidget) {
-        m_scanControlWidget->updateDeviceInfo(deviceInfo);
+    if (m_scanControl) {
+        // 通过重新设置当前设备来触发能力更新
+        m_scanControl->setCurrentDevice(m_currentDevice);
     }
     
     qDebug() << "MainWindow::updateDeviceStatus: 设备状态更新完成";
@@ -1111,13 +1214,13 @@ void MainWindow::updateBatchProcessingStatus()
     }
     
     // 获取批量处理状态
-    bool isProcessing = m_batchProcessWidget->isProcessing();
-    int totalTasks = m_batchProcessWidget->getTotalTasks();
-    int completedTasks = m_batchProcessWidget->getCompletedTasks();
+    // BatchProcessWidget使用不同的方法名
+    int totalTasks = m_batchProcess->getTotalItems();
+    int completedTasks = m_batchProcess->getCompletedItems();
     
     // 更新状态栏显示
     if (m_statusBar) {
-        if (isProcessing) {
+        if (completedTasks < totalTasks) { // 通过比较任务数判断是否在处理
             QString statusText = tr("批量处理进行中: %1/%2").arg(completedTasks).arg(totalTasks);
             m_statusBar->showMessage(statusText);
         } else if (totalTasks > 0) {
@@ -1135,7 +1238,82 @@ void MainWindow::updateBatchProcessingStatus()
     }
     
     qDebug() << "MainWindow::updateBatchProcessingStatus: 批量处理状态更新完成";
-    qDebug() << "  - 是否正在处理:" << isProcessing;
+    qDebug() << "  - 是否正在处理:" << (completedTasks < totalTasks);
     qDebug() << "  - 总任务数:" << totalTasks;
     qDebug() << "  - 已完成任务数:" << completedTasks;
+}
+
+// 新增：组件注入方法实现
+void MainWindow::setScannerManager(Dtk::Scanner::DScannerManager *manager)
+{
+    if (m_scannerManager != manager) {
+        m_scannerManager = manager;
+        qDebug() << "MainWindow: 扫描仪管理器已注入";
+        validateComponentInjection();
+    }
+}
+
+void MainWindow::setImageProcessor(Dtk::Scanner::DScannerImageProcessor *processor)
+{
+    m_injectedImageProcessor = processor;
+    qDebug() << "MainWindow: 图像处理器已注入";
+    validateComponentInjection();
+}
+
+void MainWindow::setNetworkDiscovery(Dtk::Scanner::DScannerNetworkDiscovery *discovery)
+{
+    m_injectedNetworkDiscovery = discovery;
+    qDebug() << "MainWindow: 网络发现组件已注入";
+    validateComponentInjection();
+}
+
+void MainWindow::validateComponentInjection()
+{
+    bool allComponentsReady = (m_scannerManager != nullptr);
+    
+    if (allComponentsReady && !m_componentsInjected) {
+        m_componentsInjected = true;
+        qDebug() << "MainWindow: 所有组件注入完成";
+        
+        // 如果UI已经创建，立即配置组件
+        if (m_isInitialized) {
+            configureWidgetComponents();
+        }
+    }
+}
+
+void MainWindow::configureWidgetComponents()
+{
+    qDebug() << "MainWindow: 开始配置子组件";
+    
+    // 配置设备列表组件
+    if (m_scannerManager && m_deviceList) {
+        m_deviceList->setScannerManager(m_scannerManager);
+        qDebug() << "MainWindow: 设备列表组件已配置";
+    }
+    
+    // 配置图像处理组件
+    if (m_injectedImageProcessor && m_imageProcessing) {
+        m_imageProcessing->setImageProcessor(m_injectedImageProcessor);
+        qDebug() << "MainWindow: 图像处理组件已配置";
+    }
+    
+    // 激活扫描功能
+    enableScanningCapabilities();
+}
+
+void MainWindow::enableScanningCapabilities()
+{
+    if (m_scanControl) {
+        // 如果有当前设备，启用扫描控制
+        if (m_currentDevice) {
+            m_scanControl->setCurrentDevice(m_currentDevice);
+            m_scanControl->setEnabled(true);
+            qDebug() << "MainWindow: 扫描控制已启用";
+        } else {
+            // 没有设备时保持禁用状态，但显示提示
+            m_scanControl->setEnabled(false);
+            qDebug() << "MainWindow: 等待设备连接";
+        }
+    }
 } 
