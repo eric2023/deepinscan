@@ -8,6 +8,7 @@ set(CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/dscannerdevice.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dscannermanager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core_signal_stubs.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/moc_stubs.cpp
 )
 
 # 核心模块头文件

@@ -37,6 +37,11 @@ Q_DECLARE_LOGGING_CATEGORY(scannerComm)
 Q_DECLARE_LOGGING_CATEGORY(scannerImage)
 Q_DECLARE_LOGGING_CATEGORY(scannerGui)
 
+// 全局函数声明
+DSCANNER_EXPORT QString dscannerVersion();
+DSCANNER_EXPORT QString dscannerBuildTime();
+DSCANNER_EXPORT QString dscannerCoreVersion();
+
 DSCANNER_END_NAMESPACE
 
 #endif // DSCANNERGLOBAL_H 

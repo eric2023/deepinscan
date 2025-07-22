@@ -366,6 +366,12 @@ DScannerDevice::~DScannerDevice()
     // d_ptr is managed by QScopedPointer, no need to delete manually
 }
 
+// Qt元对象系统需要的虚函数实现
+int DScannerDevice::qt_metacall(QMetaObject::Call call, int id, void **arguments)
+{
+    return QObject::qt_metacall(call, id, arguments);
+}
+
 DeviceInfo DScannerDevice::deviceInfo() const
 {
     Q_D(const DScannerDevice);

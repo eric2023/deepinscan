@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "devicelistwidget.h"
+#include "Scanner/DScannerException.h"
 #include <DApplication>
 #include <DMessageBox>
 #include <DDialog>
@@ -16,17 +17,17 @@ DWIDGET_USE_NAMESPACE
 DeviceListWidget::DeviceListWidget(QWidget *parent)
     : DWidget(parent)
     , m_scannerManager(nullptr)
-    , m_deviceList(nullptr)
+    , m_deviceListWidget(nullptr)
     , m_refreshButton(nullptr)
     , m_connectButton(nullptr)
     , m_disconnectButton(nullptr)
     , m_propertiesButton(nullptr)
     , m_statusLabel(nullptr)
-    , m_spinner(nullptr)
-    , m_refreshTimer(nullptr)
+    , m_loadingSpinner(nullptr)
+    , m_autoRefreshTimer(nullptr)
 {
     qDebug() << "DeviceListWidget: 初始化设备列表界面组件";
-    initUI();
+    setupUI();
     initConnections();
     setupRefreshTimer();
 }
@@ -34,8 +35,8 @@ DeviceListWidget::DeviceListWidget(QWidget *parent)
 DeviceListWidget::~DeviceListWidget()
 {
     qDebug() << "DeviceListWidget: 销毁设备列表界面组件";
-    if (m_refreshTimer) {
-        m_refreshTimer->stop();
+    if (m_autoRefreshTimer) {
+        m_autoRefreshTimer->stop();
     }
 }
 
@@ -51,22 +52,20 @@ void DeviceListWidget::setScannerManager(DScannerManager *manager)
     if (m_scannerManager) {
         // 连接扫描仪管理器信号
         connect(m_scannerManager, &DScannerManager::deviceDiscovered,
-                this, &DeviceListWidget::onDeviceDiscovered);
+                this, QOverload<const DeviceInfo &>::of(&DeviceListWidget::onDeviceDiscovered));
         connect(m_scannerManager, &DScannerManager::deviceRemoved,
                 this, &DeviceListWidget::onDeviceRemoved);
-        connect(m_scannerManager, &DScannerManager::deviceConnected,
+        connect(m_scannerManager, &DScannerManager::deviceOpened,
                 this, &DeviceListWidget::onDeviceConnected);
-        connect(m_scannerManager, &DScannerManager::deviceDisconnected,
+        connect(m_scannerManager, &DScannerManager::deviceClosed,
                 this, &DeviceListWidget::onDeviceDisconnected);
-        connect(m_scannerManager, &DScannerManager::discoveryFinished,
-                this, &DeviceListWidget::onDiscoveryFinished);
         
         // 立即刷新设备列表
         refreshDeviceList();
     }
 }
 
-void DeviceListWidget::initUI()
+void DeviceListWidget::setupUI()
 {
     qDebug() << "DeviceListWidget: 初始化用户界面";
     
@@ -91,10 +90,10 @@ void DeviceListWidget::initUI()
     mainLayout->addWidget(titleFrame);
     
     // 创建设备列表
-    m_deviceList = new DListWidget(this);
-    m_deviceList->setMinimumHeight(200);
-    m_deviceList->setAlternatingRowColors(true);
-    mainLayout->addWidget(m_deviceList);
+    m_deviceListWidget = new DListWidget(this);
+    m_deviceListWidget->setMinimumHeight(200);
+    m_deviceListWidget->setAlternatingRowColors(true);
+    mainLayout->addWidget(m_deviceListWidget);
     
     // 创建操作按钮区域
     auto *buttonFrame = new DFrame(this);
@@ -125,13 +124,13 @@ void DeviceListWidget::initUI()
     statusFrame->setFrameStyle(DFrame::NoFrame);
     auto *statusLayout = new QHBoxLayout(statusFrame);
     
-    m_spinner = new DSpinner(this);
-    m_spinner->setFixedSize(16, 16);
-    m_spinner->hide();
+    m_loadingSpinner = new DSpinner(this);
+    m_loadingSpinner->setFixedSize(16, 16);
+    m_loadingSpinner->hide();
     
     m_statusLabel = new DLabel("准备就绪", this);
     
-    statusLayout->addWidget(m_spinner);
+    statusLayout->addWidget(m_loadingSpinner);
     statusLayout->addWidget(m_statusLabel);
     statusLayout->addStretch();
     
@@ -155,9 +154,9 @@ void DeviceListWidget::initConnections()
             this, &DeviceListWidget::showDeviceProperties);
     
     // 列表选择信号连接
-    connect(m_deviceList, &DListWidget::itemSelectionChanged,
+    connect(m_deviceListWidget, &DListWidget::itemSelectionChanged,
             this, &DeviceListWidget::onDeviceSelectionChanged);
-    connect(m_deviceList, &DListWidget::itemDoubleClicked,
+    connect(m_deviceListWidget, &DListWidget::itemDoubleClicked,
             this, &DeviceListWidget::connectSelectedDevice);
 }
 
@@ -165,11 +164,11 @@ void DeviceListWidget::setupRefreshTimer()
 {
     qDebug() << "DeviceListWidget: 设置自动刷新定时器";
     
-    m_refreshTimer = new QTimer(this);
-    m_refreshTimer->setInterval(30000); // 30秒自动刷新
-    connect(m_refreshTimer, &QTimer::timeout,
+    m_autoRefreshTimer = new QTimer(this);
+    m_autoRefreshTimer->setInterval(30000); // 30秒自动刷新
+    connect(m_autoRefreshTimer, &QTimer::timeout,
             this, &DeviceListWidget::refreshDeviceList);
-    m_refreshTimer->start();
+    m_autoRefreshTimer->start();
 }
 
 void DeviceListWidget::refreshDeviceList()
@@ -182,13 +181,13 @@ void DeviceListWidget::refreshDeviceList()
     qDebug() << "DeviceListWidget: 开始刷新设备列表";
     
     // 显示加载状态
-    m_spinner->show();
-    m_spinner->start();
+    m_loadingSpinner->show();
+    m_loadingSpinner->start();
     m_statusLabel->setText("正在搜索设备...");
     m_refreshButton->setEnabled(false);
     
     // 清空当前列表
-    m_deviceList->clear();
+    m_deviceListWidget->clear();
     m_devices.clear();
     
     // 开始设备发现
@@ -197,7 +196,7 @@ void DeviceListWidget::refreshDeviceList()
 
 void DeviceListWidget::connectSelectedDevice()
 {
-    auto *currentItem = m_deviceList->currentItem();
+    auto *currentItem = m_deviceListWidget->currentItem();
     if (!currentItem) {
         qWarning() << "DeviceListWidget: 未选择设备";
         return;
@@ -213,7 +212,7 @@ void DeviceListWidget::connectSelectedDevice()
     
     if (m_scannerManager) {
         try {
-            m_scannerManager->connectDevice(deviceId);
+            m_scannerManager->openDevice(deviceId);
             m_statusLabel->setText("正在连接设备...");
         } catch (const DScannerException &e) {
             qCritical() << "DeviceListWidget: 连接设备失败:" << e.what();
@@ -225,7 +224,7 @@ void DeviceListWidget::connectSelectedDevice()
 
 void DeviceListWidget::disconnectSelectedDevice()
 {
-    auto *currentItem = m_deviceList->currentItem();
+    auto *currentItem = m_deviceListWidget->currentItem();
     if (!currentItem) {
         qWarning() << "DeviceListWidget: 未选择设备";
         return;
@@ -241,7 +240,7 @@ void DeviceListWidget::disconnectSelectedDevice()
     
     if (m_scannerManager) {
         try {
-            m_scannerManager->disconnectDevice(deviceId);
+            m_scannerManager->closeDevice(deviceId);
             m_statusLabel->setText("正在断开设备...");
         } catch (const DScannerException &e) {
             qCritical() << "DeviceListWidget: 断开设备失败:" << e.what();
@@ -253,7 +252,7 @@ void DeviceListWidget::disconnectSelectedDevice()
 
 void DeviceListWidget::showDeviceProperties()
 {
-    auto *currentItem = m_deviceList->currentItem();
+    auto *currentItem = m_deviceListWidget->currentItem();
     if (!currentItem) {
         return;
     }
@@ -271,7 +270,7 @@ void DeviceListWidget::showDeviceProperties()
 
 void DeviceListWidget::onDeviceSelectionChanged()
 {
-    auto *currentItem = m_deviceList->currentItem();
+    auto *currentItem = m_deviceListWidget->currentItem();
     bool hasSelection = (currentItem != nullptr);
     
     m_propertiesButton->setEnabled(hasSelection);
@@ -283,8 +282,9 @@ void DeviceListWidget::onDeviceSelectionChanged()
             DeviceInfo deviceInfo = it.value();
             
             // 根据设备状态更新按钮
-            m_connectButton->setEnabled(deviceInfo.status == DeviceStatus::Disconnected);
-            m_disconnectButton->setEnabled(deviceInfo.status == DeviceStatus::Connected);
+            bool isOpen = m_scannerManager && m_scannerManager->isDeviceOpen(deviceId);
+            m_connectButton->setEnabled(deviceInfo.isAvailable && !isOpen);
+            m_disconnectButton->setEnabled(isOpen);
             
             // 发射设备选择信号
             emit deviceSelected(deviceInfo);
@@ -297,17 +297,17 @@ void DeviceListWidget::onDeviceSelectionChanged()
 
 void DeviceListWidget::onDeviceDiscovered(const DeviceInfo &device)
 {
-    qDebug() << "DeviceListWidget: 发现设备:" << device.id << device.name;
+    qDebug() << "DeviceListWidget: 发现设备:" << device.deviceId << device.name;
     
     // 添加到设备映射
-    m_devices[device.id] = device;
+    m_devices[device.deviceId] = device;
     
     // 创建列表项
     auto *item = new QListWidgetItem();
-    item->setData(Qt::UserRole, device.id);
+    item->setData(Qt::UserRole, device.deviceId);
     
     // 设置显示文本
-    QString displayText = QString("%1 (%2)").arg(device.name, device.vendor);
+    QString displayText = QString("%1 (%2)").arg(device.name, device.manufacturer);
     if (!device.model.isEmpty() && device.model != device.name) {
         displayText += QString(" - %1").arg(device.model);
     }
@@ -315,15 +315,12 @@ void DeviceListWidget::onDeviceDiscovered(const DeviceInfo &device)
     
     // 设置图标
     QString iconName;
-    switch (device.type) {
-        case DeviceType::Flatbed:
-            iconName = "scanner";
-            break;
-        case DeviceType::ADF:
-            iconName = "document-scanner";
-            break;
-        case DeviceType::Network:
+    switch (device.protocol) {
+        case CommunicationProtocol::Network:
             iconName = "network-scanner";
+            break;
+        case CommunicationProtocol::USB:
+            iconName = "scanner";
             break;
         default:
             iconName = "scanner";
@@ -334,13 +331,13 @@ void DeviceListWidget::onDeviceDiscovered(const DeviceInfo &device)
     // 设置状态提示
     QString tooltip = QString("设备: %1\n制造商: %2\n型号: %3\n连接方式: %4\n状态: %5")
                         .arg(device.name)
-                        .arg(device.vendor)
+                        .arg(device.manufacturer)
                         .arg(device.model)
-                        .arg(device.type == DeviceType::Network ? "网络" : "USB")
-                        .arg(device.status == DeviceStatus::Connected ? "已连接" : "未连接");
+                                                         .arg(device.protocol == CommunicationProtocol::Network ? "网络" : "USB")
+                                                         .arg(device.isAvailable ? "可用" : "不可用");
     item->setToolTip(tooltip);
     
-    m_deviceList->addItem(item);
+    m_deviceListWidget->addItem(item);
 }
 
 void DeviceListWidget::onDeviceRemoved(const QString &deviceId)
@@ -351,10 +348,10 @@ void DeviceListWidget::onDeviceRemoved(const QString &deviceId)
     m_devices.remove(deviceId);
     
     // 从列表中移除
-    for (int i = 0; i < m_deviceList->count(); ++i) {
-        auto *item = m_deviceList->item(i);
+    for (int i = 0; i < m_deviceListWidget->count(); ++i) {
+        auto *item = m_deviceListWidget->item(i);
         if (item && item->data(Qt::UserRole).toString() == deviceId) {
-            delete m_deviceList->takeItem(i);
+            delete m_deviceListWidget->takeItem(i);
             break;
         }
     }
@@ -367,8 +364,6 @@ void DeviceListWidget::onDeviceConnected(const QString &deviceId)
     // 更新设备状态
     auto it = m_devices.find(deviceId);
     if (it != m_devices.end()) {
-        it.value().status = DeviceStatus::Connected;
-        
         // 更新列表项显示
         updateDeviceListItem(deviceId);
         
@@ -387,8 +382,6 @@ void DeviceListWidget::onDeviceDisconnected(const QString &deviceId)
     // 更新设备状态
     auto it = m_devices.find(deviceId);
     if (it != m_devices.end()) {
-        it.value().status = DeviceStatus::Disconnected;
-        
         // 更新列表项显示
         updateDeviceListItem(deviceId);
         
@@ -405,8 +398,8 @@ void DeviceListWidget::onDiscoveryFinished()
     qDebug() << "DeviceListWidget: 设备发现完成";
     
     // 隐藏加载状态
-    m_spinner->stop();
-    m_spinner->hide();
+    m_loadingSpinner->stop();
+    m_loadingSpinner->hide();
     m_refreshButton->setEnabled(true);
     
     // 更新状态
@@ -428,17 +421,17 @@ void DeviceListWidget::updateDeviceListItem(const QString &deviceId)
     const DeviceInfo &device = it.value();
     
     // 查找对应的列表项
-    for (int i = 0; i < m_deviceList->count(); ++i) {
-        auto *item = m_deviceList->item(i);
+    for (int i = 0; i < m_deviceListWidget->count(); ++i) {
+        auto *item = m_deviceListWidget->item(i);
         if (item && item->data(Qt::UserRole).toString() == deviceId) {
             // 更新显示文本
-            QString displayText = QString("%1 (%2)").arg(device.name, device.vendor);
+            QString displayText = QString("%1 (%2)").arg(device.name, device.manufacturer);
             if (!device.model.isEmpty() && device.model != device.name) {
                 displayText += QString(" - %1").arg(device.model);
             }
             
             // 添加连接状态指示
-            if (device.status == DeviceStatus::Connected) {
+            if (device.isAvailable) {
                 displayText += " [已连接]";
             }
             
@@ -447,10 +440,10 @@ void DeviceListWidget::updateDeviceListItem(const QString &deviceId)
             // 更新工具提示
             QString tooltip = QString("设备: %1\n制造商: %2\n型号: %3\n连接方式: %4\n状态: %5")
                                 .arg(device.name)
-                                .arg(device.vendor)
+                                .arg(device.manufacturer)
                                 .arg(device.model)
-                                .arg(device.type == DeviceType::Network ? "网络" : "USB")
-                                .arg(device.status == DeviceStatus::Connected ? "已连接" : "未连接");
+                                .arg(device.protocol == CommunicationProtocol::Network ? "网络" : "USB")
+                                .arg(device.isAvailable ? "可用" : "不可用");
             item->setToolTip(tooltip);
             
             break;
@@ -459,4 +452,73 @@ void DeviceListWidget::updateDeviceListItem(const QString &deviceId)
     
     // 更新按钮状态
     onDeviceSelectionChanged();
+}
+
+// 缺失的槽函数实现 - 存根版本
+void DeviceListWidget::onDeviceItemClicked(QListWidgetItem *item)
+{
+    Q_UNUSED(item)
+    qDebug() << "DeviceListWidget::onDeviceItemClicked - 存根实现";
+}
+
+void DeviceListWidget::onDeviceItemDoubleClicked(QListWidgetItem *item)
+{
+    Q_UNUSED(item)
+    qDebug() << "DeviceListWidget::onDeviceItemDoubleClicked - 存根实现";
+}
+
+void DeviceListWidget::onRefreshButtonClicked()
+{
+    qDebug() << "DeviceListWidget::onRefreshButtonClicked - 存根实现";
+    refreshDeviceList(); // 调用现有的刷新方法
+}
+
+void DeviceListWidget::onAutoRefreshTimeout()
+{
+    qDebug() << "DeviceListWidget::onAutoRefreshTimeout - 存根实现";
+    refreshDeviceList(); // 调用现有的刷新方法
+}
+
+void DeviceListWidget::onDeviceDiscovered()
+{
+    qDebug() << "DeviceListWidget::onDeviceDiscovered - 存根实现";
+}
+
+void DeviceListWidget::onDeviceStatusChanged()
+{
+    qDebug() << "DeviceListWidget::onDeviceStatusChanged - 存根实现";
+}
+
+// DeviceListItem事件处理实现 - 存根版本
+void DeviceListItem::mousePressEvent(QMouseEvent *event)
+{
+    Q_UNUSED(event)
+    qDebug() << "DeviceListItem::mousePressEvent - 存根实现";
+}
+
+void DeviceListItem::mouseReleaseEvent(QMouseEvent *event)
+{
+    Q_UNUSED(event)
+    qDebug() << "DeviceListItem::mouseReleaseEvent - 存根实现";
+    emit clicked();
+}
+
+void DeviceListItem::enterEvent(QEvent *event)
+{
+    Q_UNUSED(event)
+    qDebug() << "DeviceListItem::enterEvent - 存根实现";
+}
+
+void DeviceListItem::leaveEvent(QEvent *event)
+{
+    Q_UNUSED(event)
+    qDebug() << "DeviceListItem::leaveEvent - 存根实现";
+}
+
+void DeviceListItem::paintEvent(QPaintEvent *event)
+{
+    Q_UNUSED(event)
+    qDebug() << "DeviceListItem::paintEvent - 存根实现";
+    // 调用父类的实现以确保基本绘制
+    QWidget::paintEvent(event);
 } 

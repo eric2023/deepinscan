@@ -18,6 +18,7 @@
 #include <QNetworkReply>
 #include <QHttpMultiPart>
 #include <QEventLoop>
+#include <QUuid>
 #include <QSslSocket>
 #include <QNetworkProxy>
 
@@ -50,7 +51,7 @@ NetworkCompleteDiscovery::NetworkCompleteDiscovery(QObject *parent)
     connect(m_discoveryTimer, &QTimer::timeout, this, &NetworkCompleteDiscovery::performPeriodicDiscovery);
     
     // 初始化网络管理器
-    m_networkManager->setTransferTimeout(10000);
+    // m_networkManager->setTransferTimeout(10000); // Qt 5.15+才支持，暂时注释
     connect(m_networkManager, &QNetworkAccessManager::finished, 
             this, &NetworkCompleteDiscovery::handleNetworkReply);
     
@@ -74,42 +75,37 @@ void NetworkCompleteDiscovery::initializeProtocolSupport()
     qCDebug(networkCompleteDiscovery) << "初始化协议支持";
     
     // mDNS/Bonjour支持
-    m_supportedProtocols[ProtocolType::MDNS] = {
-        "_ipp._tcp.local", // AirScan/AirPrint
-        "_scanner._tcp.local", // 通用扫描仪服务
-        "_ipp._tcp.local", // IPP打印/扫描
-        "_pdl-datastream._tcp.local", // HP JetDirect
-        "_http._tcp.local" // HTTP服务
-    };
+    m_supportedProtocols[static_cast<int>(ProtocolType::MDNS)] = QStringList() <<
+        "_ipp._tcp.local" << // AirScan/AirPrint
+        "_scanner._tcp.local" << // 通用扫描仪服务
+        "_ipp._tcp.local" << // IPP打印/扫描
+        "_pdl-datastream._tcp.local" << // HP JetDirect
+        "_http._tcp.local"; // HTTP服务
     
     // WS-Discovery (WSD) 支持
-    m_supportedProtocols[ProtocolType::WSD] = {
-        "urn:schemas-xmlsoap-org:ws:2005:04:discovery",
-        "http://schemas.microsoft.com/windows/2006/08/wdp/scan"
-    };
+    m_supportedProtocols[static_cast<int>(ProtocolType::WSD)] = QStringList() <<
+        "urn:schemas-xmlsoap-org:ws:2005:04:discovery" <<
+        "http://schemas.microsoft.com/windows/2006/08/wdp/scan";
     
     // SOAP/XML-RPC支持
-    m_supportedProtocols[ProtocolType::SOAP] = {
-        "/eSCL/ScannerCapabilities",
-        "/WS/ScannerConfiguration", 
-        "/scan/status",
-        "/scan/jobs"
-    };
+    m_supportedProtocols[static_cast<int>(ProtocolType::SOAP)] = QStringList() <<
+        "/eSCL/ScannerCapabilities" <<
+        "/WS/ScannerConfiguration" << 
+        "/scan/status" <<
+        "/scan/jobs";
     
     // SNMP支持
-    m_supportedProtocols[ProtocolType::SNMP] = {
-        "1.3.6.1.2.1.25.3.2.1.3", // hrDeviceDescr
-        "1.3.6.1.2.1.1.1.0", // sysDescr
-        "1.3.6.1.4.1.1536", // Canon MIB
-        "1.3.6.1.4.1.11.2.3.9.4.2.1.1.3.3.0" // HP LaserJet MIB
-    };
+    m_supportedProtocols[static_cast<int>(ProtocolType::SNMP)] = QStringList() <<
+        "1.3.6.1.2.1.25.3.2.1.3" << // hrDeviceDescr
+        "1.3.6.1.2.1.1.1.0" << // sysDescr
+        "1.3.6.1.4.1.1536" << // Canon MIB
+        "1.3.6.1.4.1.11.2.3.9.4.2.1.1.3.3.0"; // HP LaserJet MIB
     
     // UPnP支持
-    m_supportedProtocols[ProtocolType::UPNP] = {
-        "urn:schemas-upnp-org:device:Scanner:1",
-        "urn:schemas-upnp-org:device:PrinterEnhanced:1",
-        "urn:schemas-microsoft-com:device:Scanner:1"
-    };
+    m_supportedProtocols[static_cast<int>(ProtocolType::UPNP)] = QStringList() <<
+        "urn:schemas-upnp-org:device:Scanner:1" <<
+        "urn:schemas-upnp-org:device:PrinterEnhanced:1" <<
+        "urn:schemas-microsoft-com:device:Scanner:1";
     
     qCDebug(networkCompleteDiscovery) << "协议支持初始化完成，支持" 
                                       << m_supportedProtocols.size() << "种协议";
@@ -195,7 +191,7 @@ void NetworkCompleteDiscovery::performMdnsDiscovery()
 {
     qCDebug(networkCompleteDiscovery) << "执行mDNS发现";
     
-    foreach (const QString &serviceType, m_supportedProtocols[ProtocolType::MDNS]) {
+    foreach (const QString &serviceType, m_supportedProtocols[static_cast<int>(ProtocolType::MDNS)]) {
         // 创建mDNS查询任务
         auto *task = new MdnsDiscoveryTask(serviceType, this);
         connect(task, &MdnsDiscoveryTask::deviceFound, 
@@ -207,7 +203,7 @@ void NetworkCompleteDiscovery::performMdnsDiscovery()
         m_activeProbes++;
     }
     
-    m_statistics.mdnsQueriesSent += m_supportedProtocols[ProtocolType::MDNS].size();
+    m_statistics.mdnsQueriesSent += m_supportedProtocols[static_cast<int>(ProtocolType::MDNS)].size();
 }
 
 void NetworkCompleteDiscovery::performWsdDiscovery()

@@ -44,6 +44,8 @@ DImageProcessingWidget::~DImageProcessingWidget()
     qDebug() << "销毁图像处理组件";
 }
 
+// Qt元对象系统的qt_metacall由MOC自动生成，这里不需要手动实现
+
 void DImageProcessingWidget::setupUI()
 {
     qDebug() << "设置图像处理界面布局";
@@ -659,6 +661,19 @@ void DImageProcessingWidget::updateProgress(int percentage)
             setProcessing(false);
         });
     }
+}
+
+// 缺失方法的存根实现
+void DImageProcessingWidget::setSourceImage(const QPixmap &image)
+{
+    Q_UNUSED(image)
+    qDebug() << "DImageProcessingWidget::setSourceImage - 存根实现";
+}
+
+void DImageProcessingWidget::setImageProcessor(DScannerImageProcessor *processor)
+{
+    Q_UNUSED(processor)
+    qDebug() << "DImageProcessingWidget::setImageProcessor - 存根实现";
 }
 
 void DImageProcessingWidget::setPreviewEnabled(bool enabled)

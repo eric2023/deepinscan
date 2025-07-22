@@ -19,11 +19,33 @@
 #include <QGridLayout>
 #include <QTimer>
 #include <QQueue>
+#include <DLineEdit>
+#include <QFileInfo>
+#include <QLoggingCategory>
 
 #include "Scanner/DScannerTypes.h"
 
 DWIDGET_USE_NAMESPACE
 using namespace Dtk::Scanner;
+
+Q_DECLARE_LOGGING_CATEGORY(batchProcessWidget)
+
+/**
+ * @brief 批量处理设置结构
+ */
+struct BatchProcessingSettings {
+    QString inputDirectory;       // 输入目录
+    QString outputDirectory;      // 输出目录
+    QString outputFormat;         // 输出格式
+    int quality;                  // 图像质量
+    QString namingMode;           // 命名模式
+    QString namingPattern;        // 命名模式
+    int concurrentTasks;          // 并发任务数
+    QString errorHandling;        // 错误处理方式
+    bool overwriteFiles;          // 覆盖文件
+    bool includeSubdirs;          // 包含子目录
+    QString fileFilter;           // 文件过滤器
+};
 
 /**
  * @brief 批量扫描处理组件
@@ -47,6 +69,29 @@ public:
         QString status;          // 状态
         int progress;            // 进度
         QPixmap thumbnail;       // 缩略图
+        
+        // 扩展字段以兼容实现文件（按构造函数初始化顺序排列）
+        QString sourcePath;      // 源文件路径
+        QString inputPath;       // 输入路径
+        int quality;             // 质量
+        int resolution;          // 分辨率
+        ColorMode colorMode;     // 颜色模式
+        ImageFormat format;      // 图像格式
+        bool autoCrop;           // 自动裁剪
+        bool autoDeskew;         // 自动倾斜校正
+        double rotateAngle;      // 旋转角度
+        double brightness;       // 亮度
+        double contrast;         // 对比度
+        QString errorMessage;    // 错误信息
+        QDateTime createdTime;   // 创建时间
+        QDateTime startedTime;   // 开始时间
+        QDateTime finishedTime;  // 完成时间
+        
+        // 构造函数
+        BatchItem() : progress(0), quality(85), resolution(300), 
+                     colorMode(ColorMode::Color), format(ImageFormat::JPEG),
+                     autoCrop(false), autoDeskew(false), rotateAngle(0.0),
+                     brightness(0.0), contrast(0.0) {}
     };
 
     explicit BatchProcessWidget(QWidget *parent = nullptr);
@@ -101,6 +146,12 @@ public:
      */
     int getCompletedItems() const;
 
+    /**
+     * @brief 获取批量处理设置
+     * @return 批量处理设置
+     */
+    BatchProcessingSettings getBatchSettings() const;
+
 signals:
     /**
      * @brief 批量处理开始
@@ -116,6 +167,33 @@ signals:
      * @brief 批量处理暂停
      */
     void batchProcessingPaused();
+
+    /**
+     * @brief 批量处理开始信号
+     */
+    void processingStarted();
+
+    /**
+     * @brief 批量处理暂停信号
+     */
+    void processingPaused();
+
+    /**
+     * @brief 批量处理恢复信号
+     */
+    void processingResumed();
+
+    /**
+     * @brief 批量处理停止信号
+     */
+    void processingStopped();
+
+    /**
+     * @brief 批量处理完成信号
+     * @param completed 完成数量
+     * @param failed 失败数量
+     */
+    void processingCompleted(int completed, int failed);
 
     /**
      * @brief 单个任务完成
@@ -318,19 +396,7 @@ private:
      */
     bool validateOutputSettings();
 
-    /**
-     * @brief 保存任务到JSON文件
-     * @param fileName 文件名
-     * @return 是否成功
-     */
-    bool saveTasksToJson(const QString &fileName);
-
-    /**
-     * @brief 从JSON文件加载任务
-     * @param fileName 文件名
-     * @return 是否成功
-     */
-    bool loadTasksFromJson(const QString &fileName);
+    // 重复声明已删除，使用private区域的声明
 
 private:
     // 主布局
@@ -344,24 +410,59 @@ private:
 
     // 输出设置控件
     DComboBox *m_outputFormatCombo;
+    DComboBox *m_outputFormatComboBox;  // 兼容命名
     DComboBox *m_outputQualityCombo;
     DCheckBox *m_autoNamingCheck;
     DCheckBox *m_createSubfoldersCheck;
     DComboBox *m_namingPatternCombo;
+    DComboBox *m_namingModeComboBox;    // 兼容命名
+    DLineEdit *m_namingPatternEdit;     // 兼容命名
+    DLineEdit *m_outputPathEdit;        // 兼容命名
+    DComboBox *m_fileFilterComboBox;    // 兼容命名
+    DCheckBox *m_overwriteFiles;        // 覆盖文件选项
+    DCheckBox *m_includeSubdirs;        // 包含子目录选项
+    
+    // 输入设置控件
+    DLineEdit *m_inputPathEdit;         // 输入路径编辑框
+    DSpinBox *m_qualitySpinBox;         // 质量设置
+    DSpinBox *m_concurrentTasksSpinBox; // 并发任务数设置
+    DComboBox *m_errorHandlingComboBox; // 错误处理方式
 
     // 控制按钮
     DPushButton *m_addItemButton;
+    DPushButton *m_addFilesButton;      // 兼容命名
     DPushButton *m_removeItemButton;
     DPushButton *m_clearItemsButton;
+    DPushButton *m_clearAllButton;      // 兼容命名
     DPushButton *m_startButton;
     DPushButton *m_stopButton;
     DPushButton *m_pauseButton;
+    DPushButton *m_inputBrowseButton;   // 兼容命名
+    DPushButton *m_outputBrowseButton;  // 兼容命名
+    DPushButton *m_scanDirectoryButton; // 兼容命名
+    DPushButton *m_removeSelectedButton; // 移除选中按钮
+    DPushButton *m_saveQueueButton;     // 保存队列按钮
+    DPushButton *m_loadQueueButton;     // 加载队列按钮
 
     // 进度显示
     DProgressBar *m_totalProgressBar;
+    DProgressBar *m_overallProgressBar;   // 兼容命名
     DProgressBar *m_currentProgressBar;
     DLabel *m_statusLabel;
     DLabel *m_countLabel;
+    DLabel *m_overallProgressLabel;       // 兼容命名
+    DLabel *m_currentFileLabel;           // 兼容命名
+    DLabel *m_currentProgressLabel;       // 兼容命名
+    DLabel *m_taskStatsLabel;             // 兼容命名
+    DListWidget *m_taskListWidget;        // 兼容命名
+    DLabel *m_estimatedTimeLabel;         // 预计时间标签
+    
+    // 分组控件
+    DGroupBox *m_fileGroup;               // 文件管理分组
+    DGroupBox *m_settingsGroup;           // 设置分组
+    DGroupBox *m_taskGroup;               // 任务分组
+    DGroupBox *m_progressGroup;           // 进度分组
+    DFrame *m_controlFrame;               // 控制按钮框架
 
     // 处理状态
     bool m_isProcessing;

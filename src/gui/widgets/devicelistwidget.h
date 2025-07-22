@@ -81,6 +81,24 @@ signals:
      */
     void deviceConnectionChanged(const QString &deviceId, bool connected);
 
+    /**
+     * @brief 设备属性请求信号
+     * @param deviceId 设备ID
+     */
+    void devicePropertiesRequested(const QString &deviceId);
+
+    /**
+     * @brief 设备已连接信号
+     * @param device 设备信息
+     */
+    void deviceConnected(const DeviceInfo &device);
+
+    /**
+     * @brief 设备已断开连接信号
+     * @param deviceId 设备ID
+     */
+    void deviceDisconnected(const QString &deviceId);
+
 private slots:
     void onDeviceItemClicked(QListWidgetItem *item);
     void onDeviceItemDoubleClicked(QListWidgetItem *item);
@@ -119,14 +137,12 @@ private:
 private:
     // 界面组件
     DListWidget *m_deviceListWidget;
-    DListWidget *m_deviceList;  // 兼容实现文件中的命名
     DPushButton *m_refreshButton;
     DPushButton *m_connectButton;
     DPushButton *m_disconnectButton;
     DPushButton *m_propertiesButton;
     DLabel *m_statusLabel;
     DSpinner *m_loadingSpinner;
-    DSpinner *m_spinner;  // 兼容实现文件中的命名
     QVBoxLayout *m_mainLayout;
     QHBoxLayout *m_buttonLayout;
 
@@ -134,14 +150,12 @@ private:
     DScannerManager *m_scannerManager;
 
     // 状态管理
-    QList<DeviceInfo> m_deviceList;
-    QList<DeviceInfo> m_devices;  // 兼容实现文件中的命名
+    QMap<QString, DeviceInfo> m_devices;  // 设备映射 (deviceId -> DeviceInfo)
     QString m_selectedDeviceId;
     bool m_isRefreshing;
     
     // 自动刷新
     QTimer *m_autoRefreshTimer;
-    QTimer *m_refreshTimer;  // 兼容实现文件中的命名
     int m_autoRefreshInterval;
 
     // 设备状态图标

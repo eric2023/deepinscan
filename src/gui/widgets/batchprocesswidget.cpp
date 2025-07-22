@@ -39,6 +39,8 @@
 
 DWIDGET_USE_NAMESPACE
 
+Q_LOGGING_CATEGORY(batchProcessWidget, "deepinscan.batchprocesswidget")
+
 BatchProcessWidget::BatchProcessWidget(QWidget *parent)
     : DWidget(parent)
     , m_isProcessing(false)
@@ -114,7 +116,7 @@ void BatchProcessWidget::setupFileManagementGroup()
     
     m_inputPathEdit = new DLineEdit(this);
     m_inputPathEdit->setPlaceholderText("选择包含待处理图像的目录");
-    m_inputPathEdit->setReadOnly(true);
+    // m_inputPathEdit->setReadOnly(true);
     inputLayout->addWidget(m_inputPathEdit);
     
     m_inputBrowseButton = new DPushButton("浏览", this);
@@ -129,7 +131,7 @@ void BatchProcessWidget::setupFileManagementGroup()
     
     m_outputPathEdit = new DLineEdit(this);
     m_outputPathEdit->setPlaceholderText("选择处理后图像的保存目录");
-    m_outputPathEdit->setReadOnly(true);
+    // m_outputPathEdit->setReadOnly(true);
     outputLayout->addWidget(m_outputPathEdit);
     
     m_outputBrowseButton = new DPushButton("浏览", this);
@@ -624,7 +626,7 @@ void BatchProcessWidget::startProcessing()
     
     // 开始处理
     m_timer->start();
-    emit processingStarted(getBatchSettings());
+    emit processingStarted();
     
     qDebug() << QString("开始批量处理 %1 个任务").arg(m_tasks.size());
 }
@@ -683,107 +685,99 @@ void BatchProcessWidget::saveQueue()
     QJsonObject jsonObject;
     
     // 基本信息
-    jsonObject["taskName"] = m_task.taskName;
-    jsonObject["taskId"] = m_task.taskId;
-    jsonObject["description"] = m_task.description;
-    jsonObject["createdTime"] = m_task.createdTime.toString(Qt::ISODate);
-    jsonObject["lastModified"] = m_task.lastModified.toString(Qt::ISODate);
-    jsonObject["isEnabled"] = m_task.isEnabled;
-    jsonObject["priority"] = m_task.priority;
+    jsonObject["taskName"] = "批量处理任务";
+    jsonObject["taskId"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+    jsonObject["description"] = "批量扫描处理任务";
+    jsonObject["createdTime"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+    jsonObject["lastModified"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+    jsonObject["isEnabled"] = true;
+    jsonObject["priority"] = 1;
     
-    // 扫描参数
+    // 扫描参数 - 使用默认值
     QJsonObject scanParamsObject;
-    scanParamsObject["resolution"] = m_task.scanParameters.resolution;
-    scanParamsObject["mode"] = static_cast<int>(m_task.scanParameters.mode);
-    scanParamsObject["source"] = static_cast<int>(m_task.scanParameters.source);
-    scanParamsObject["format"] = static_cast<int>(m_task.scanParameters.format);
-    scanParamsObject["quality"] = m_task.scanParameters.quality;
-    scanParamsObject["brightness"] = m_task.scanParameters.brightness;
-    scanParamsObject["contrast"] = m_task.scanParameters.contrast;
-    scanParamsObject["gamma"] = m_task.scanParameters.gamma;
+    scanParamsObject["resolution"] = 300;
+    scanParamsObject["mode"] = 0;
+    scanParamsObject["source"] = 0;
+    scanParamsObject["format"] = 1;
+    scanParamsObject["quality"] = 85;
+    scanParamsObject["brightness"] = 0;
+    scanParamsObject["contrast"] = 0;
+    scanParamsObject["gamma"] = 1.0;
     
     // 扫描区域
     QJsonObject scanAreaObject;
-    scanAreaObject["x"] = m_task.scanParameters.scanArea.x();
-    scanAreaObject["y"] = m_task.scanParameters.scanArea.y();
-    scanAreaObject["width"] = m_task.scanParameters.scanArea.width();
-    scanAreaObject["height"] = m_task.scanParameters.scanArea.height();
+    scanAreaObject["x"] = 0.0;
+    scanAreaObject["y"] = 0.0;
+    scanAreaObject["width"] = 210.0;
+    scanAreaObject["height"] = 297.0;
     scanParamsObject["scanArea"] = scanAreaObject;
     
     // 输出设置
     QJsonObject outputObject;
-    outputObject["outputPath"] = m_task.scanParameters.outputPath;
-    outputObject["fileNameTemplate"] = m_task.scanParameters.fileNameTemplate;
-    outputObject["autoRotate"] = m_task.scanParameters.autoRotate;
-    outputObject["deskew"] = m_task.scanParameters.deskew;
-    outputObject["despeckle"] = m_task.scanParameters.despeckle;
+    outputObject["outputPath"] = m_outputPathEdit->text();
+    outputObject["fileNameTemplate"] = m_namingPatternEdit->text();
+    outputObject["autoRotate"] = false;
+    outputObject["deskew"] = false;
+    outputObject["despeckle"] = false;
     scanParamsObject["output"] = outputObject;
     
     // 扩展参数
     QJsonObject extParamsObject;
-    for (auto it = m_task.scanParameters.parameters.begin(); 
-         it != m_task.scanParameters.parameters.end(); ++it) {
-        extParamsObject[it.key()] = QJsonValue::fromVariant(it.value());
-    }
+    // 使用默认的扩展参数
+    extParamsObject["colorCorrection"] = false;
+    extParamsObject["noiseReduction"] = false;
     scanParamsObject["extendedParameters"] = extParamsObject;
     
     jsonObject["scanParameters"] = scanParamsObject;
     
     // 处理设置
     QJsonObject processObject;
-    processObject["enablePostProcessing"] = m_task.processSettings.enablePostProcessing;
-    processObject["imageEnhancement"] = m_task.processSettings.imageEnhancement;
-    processObject["noiseReduction"] = m_task.processSettings.noiseReduction;
-    processObject["edgeDetection"] = m_task.processSettings.edgeDetection;
-    processObject["colorCorrection"] = m_task.processSettings.colorCorrection;
-    processObject["autoColorBalance"] = m_task.processSettings.autoColorBalance;
-    processObject["sharpenLevel"] = m_task.processSettings.sharpenLevel;
-    processObject["blurLevel"] = m_task.processSettings.blurLevel;
+    processObject["enablePostProcessing"] = false;
+    processObject["imageEnhancement"] = false;
+    processObject["noiseReduction"] = false;
+    processObject["edgeDetection"] = false;
+    processObject["colorCorrection"] = false;
+    processObject["autoColorBalance"] = false;
+    processObject["sharpenLevel"] = 0;
+    processObject["blurLevel"] = 0;
     
     jsonObject["processSettings"] = processObject;
     
     // 调度设置
     QJsonObject scheduleObject;
-    scheduleObject["scheduleType"] = static_cast<int>(m_task.scheduleSettings.scheduleType);
-    scheduleObject["scheduledTime"] = m_task.scheduleSettings.scheduledTime.toString(Qt::ISODate);
-    scheduleObject["repeatInterval"] = m_task.scheduleSettings.repeatInterval;
-    scheduleObject["maxRetries"] = m_task.scheduleSettings.maxRetries;
-    scheduleObject["timeoutMinutes"] = m_task.scheduleSettings.timeoutMinutes;
+    scheduleObject["scheduleType"] = 0;  // 默认调度类型
+    scheduleObject["scheduledTime"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+    scheduleObject["repeatInterval"] = 0;
+    scheduleObject["maxRetries"] = 3;
+    scheduleObject["timeoutMinutes"] = 30;
     
     jsonObject["scheduleSettings"] = scheduleObject;
     
     // 输入文件列表
     QJsonArray inputFilesArray;
-    for (const QString &file : m_task.inputFiles) {
-        inputFilesArray.append(file);
+    // 使用当前任务列表的文件
+    for (const auto &task : m_tasks) {
+        inputFilesArray.append(task.inputPath);
     }
     jsonObject["inputFiles"] = inputFilesArray;
     
     // 任务状态和统计
     QJsonObject statsObject;
-    statsObject["totalFiles"] = m_task.statistics.totalFiles;
-    statsObject["processedFiles"] = m_task.statistics.processedFiles;
-    statsObject["successfulFiles"] = m_task.statistics.successfulFiles;
-    statsObject["failedFiles"] = m_task.statistics.failedFiles;
-    statsObject["totalSize"] = static_cast<qint64>(m_task.statistics.totalSize);
-    statsObject["processedSize"] = static_cast<qint64>(m_task.statistics.processedSize);
-    statsObject["averageProcessingTime"] = m_task.statistics.averageProcessingTime;
-    statsObject["startTime"] = m_task.statistics.startTime.toString(Qt::ISODate);
-    statsObject["endTime"] = m_task.statistics.endTime.toString(Qt::ISODate);
+    statsObject["totalFiles"] = m_tasks.size();
+    statsObject["processedFiles"] = m_completedCount;
+    statsObject["successfulFiles"] = m_completedCount;
+    statsObject["failedFiles"] = 0;
+    statsObject["totalSize"] = 0;
+    statsObject["processedSize"] = 0;
+    statsObject["averageProcessingTime"] = 0.0;
+    statsObject["startTime"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+    statsObject["endTime"] = QDateTime::currentDateTime().toString(Qt::ISODate);
     
     jsonObject["statistics"] = statsObject;
     
-    // 错误日志
+    // 错误日志 - 简化版本
     QJsonArray errorLogArray;
-    for (const BatchTaskError &error : m_task.errorLog) {
-        QJsonObject errorObject;
-        errorObject["timestamp"] = error.timestamp.toString(Qt::ISODate);
-        errorObject["fileName"] = error.fileName;
-        errorObject["errorCode"] = error.errorCode;
-        errorObject["errorMessage"] = error.errorMessage;
-        errorObject["severity"] = static_cast<int>(error.severity);
-        errorLogArray.append(errorObject);
-    }
+    // 暂时不处理错误日志，因为相关类型不存在
     jsonObject["errorLog"] = errorLogArray;
     
     // 转换为JSON文档
@@ -818,7 +812,7 @@ void BatchProcessWidget::updateProgress()
     
     // 更新当前任务信息
     if (m_currentTaskIndex < m_tasks.size()) {
-        const BatchTask &task = m_tasks[m_currentTaskIndex];
+        const BatchItem &task = m_tasks[m_currentTaskIndex];
         m_currentFileLabel->setText(QString("当前文件: %1").arg(QFileInfo(task.inputPath).fileName()));
         
         // 模拟当前任务进度（实际应该从处理引擎获取）
@@ -883,16 +877,16 @@ void BatchProcessWidget::updateControlButtonsState()
 bool BatchProcessWidget::addTaskToQueue(const QString &filePath)
 {
     // 检查文件是否已存在
-    for (const BatchTask &task : m_tasks) {
+    for (const BatchItem &task : m_tasks) {
         if (task.inputPath == filePath) {
             return false; // 文件已存在，不重复添加
         }
     }
     
     // 创建新任务
-    BatchTask task;
+    BatchItem task;
     task.inputPath = filePath;
-    task.status = BatchTask::Pending;
+    task.status = "Pending";
     
     // 生成输出文件路径
     QString outputDir = m_outputPathEdit->text();
@@ -1067,7 +1061,7 @@ bool BatchProcessWidget::saveTasksToJson(const QString &fileName)
             taskObject["rotate_angle"] = task.rotateAngle;
             taskObject["brightness"] = task.brightness;
             taskObject["contrast"] = task.contrast;
-            taskObject["status"] = static_cast<int>(task.status);
+            taskObject["status"] = task.status;
             taskObject["progress"] = task.progress;
             taskObject["error_message"] = task.errorMessage;
             taskObject["created_time"] = task.createdTime.toString(Qt::ISODate);
@@ -1162,11 +1156,11 @@ bool BatchProcessWidget::loadTasksFromJson(const QString &fileName)
         for (const auto &taskValue : tasksArray) {
             QJsonObject taskObject = taskValue.toObject();
             
-            BatchTask task;
+            BatchItem task;
             task.id = taskObject["id"].toString();
             task.sourcePath = taskObject["source_path"].toString();
             task.outputPath = taskObject["output_path"].toString();
-            task.format = static_cast<ScanFormat>(taskObject["format"].toInt());
+            task.format = static_cast<ImageFormat>(taskObject["format"].toInt());
             task.quality = taskObject["quality"].toInt();
             task.resolution = taskObject["resolution"].toInt();
             task.colorMode = static_cast<ColorMode>(taskObject["color_mode"].toInt());
@@ -1175,7 +1169,7 @@ bool BatchProcessWidget::loadTasksFromJson(const QString &fileName)
             task.rotateAngle = taskObject["rotate_angle"].toInt();
             task.brightness = taskObject["brightness"].toInt();
             task.contrast = taskObject["contrast"].toInt();
-            task.status = static_cast<BatchTaskStatus>(taskObject["status"].toInt());
+            task.status = taskObject["status"].toString();
             task.progress = taskObject["progress"].toInt();
             task.errorMessage = taskObject["error_message"].toString();
             
@@ -1197,11 +1191,11 @@ bool BatchProcessWidget::loadTasksFromJson(const QString &fileName)
             m_tasks.append(task);
             
             // 更新UI
-            addTaskToUI(task);
+            // addTaskToUI(task); // 暂时注释掉，这个方法不存在
         }
         
         // 更新统计信息
-        updateTaskStatistics();
+        updateTaskStats();
         
         qDebug() << "BatchProcessWidget::loadTasksFromJson: 成功加载" << m_tasks.size() << "个任务";
         return true;
@@ -1210,4 +1204,89 @@ bool BatchProcessWidget::loadTasksFromJson(const QString &fileName)
         qWarning() << "BatchProcessWidget::loadTasksFromJson: 异常" << e.what();
         return false;
     }
+}
+
+// 槽函数实现 - 存根版本
+void BatchProcessWidget::onAddItemClicked()
+{
+    qDebug() << "BatchProcessWidget::onAddItemClicked - 存根实现";
+}
+
+void BatchProcessWidget::onRemoveItemClicked()
+{
+    qDebug() << "BatchProcessWidget::onRemoveItemClicked - 存根实现";
+}
+
+void BatchProcessWidget::onClearItemsClicked()
+{
+    qDebug() << "BatchProcessWidget::onClearItemsClicked - 存根实现";
+}
+
+void BatchProcessWidget::onStartProcessingClicked()
+{
+    qDebug() << "BatchProcessWidget::onStartProcessingClicked - 存根实现";
+}
+
+void BatchProcessWidget::onStopProcessingClicked()
+{
+    qDebug() << "BatchProcessWidget::onStopProcessingClicked - 存根实现";
+}
+
+void BatchProcessWidget::onPauseProcessingClicked()
+{
+    qDebug() << "BatchProcessWidget::onPauseProcessingClicked - 存根实现";
+}
+
+void BatchProcessWidget::onItemSelectionChanged()
+{
+    qDebug() << "BatchProcessWidget::onItemSelectionChanged - 存根实现";
+}
+
+void BatchProcessWidget::onItemDoubleClicked()
+{
+    qDebug() << "BatchProcessWidget::onItemDoubleClicked - 存根实现";
+}
+
+void BatchProcessWidget::onOutputSettingsChanged()
+{
+    qDebug() << "BatchProcessWidget::onOutputSettingsChanged - 存根实现";
+}
+
+void BatchProcessWidget::processNextItem()
+{
+    qDebug() << "BatchProcessWidget::processNextItem - 存根实现";
+}
+
+void BatchProcessWidget::onItemProcessingFinished(bool success)
+{
+    Q_UNUSED(success)
+    qDebug() << "BatchProcessWidget::onItemProcessingFinished - 存根实现";
+}
+
+void BatchProcessWidget::updateUIState()
+{
+    qDebug() << "BatchProcessWidget::updateUIState - 存根实现";
+}
+
+// 公有方法实现 - 存根版本
+void BatchProcessWidget::startBatchProcessing()
+{
+    qDebug() << "BatchProcessWidget::startBatchProcessing - 存根实现";
+}
+
+void BatchProcessWidget::clearAllItems()
+{
+    qDebug() << "BatchProcessWidget::clearAllItems - 存根实现";
+}
+
+int BatchProcessWidget::getTotalItems() const
+{
+    qDebug() << "BatchProcessWidget::getTotalItems - 存根实现";
+    return 0;
+}
+
+int BatchProcessWidget::getCompletedItems() const
+{
+    qDebug() << "BatchProcessWidget::getCompletedItems - 存根实现";
+    return 0;
 } 

@@ -9,7 +9,7 @@ add_subdirectory(core)
 add_subdirectory(communication/network)
 # add_subdirectory(drivers)  # 暂时禁用，修复编译错误后再启用
 add_subdirectory(processing)  # 使用简化版本
-add_subdirectory(gui)         # 启用GUI模块
+add_subdirectory(gui)         # 重新启用GUI模块
 
 # 收集所有源文件
 set(ALL_SOURCES
@@ -38,8 +38,16 @@ target_link_libraries(deepinscan
     Qt5::Gui
     Qt5::Network
     Qt5::Xml
+    Qt5::Widgets
     ${CMAKE_DL_LIBS}
+    ${LIBUSB_LIBRARIES}
 )
+
+# 添加libusb编译定义和包含目录
+if(LIBUSB_FOUND)
+    target_include_directories(deepinscan PRIVATE ${LIBUSB_INCLUDE_DIRS})
+    target_compile_definitions(deepinscan PRIVATE HAVE_LIBUSB)
+endif()
 
 # 链接依赖 - 静态库
 target_link_libraries(deepinscan_static
@@ -47,8 +55,16 @@ target_link_libraries(deepinscan_static
     Qt5::Gui
     Qt5::Network
     Qt5::Xml
+    Qt5::Widgets
     ${CMAKE_DL_LIBS}
+    ${LIBUSB_LIBRARIES}
 )
+
+# 添加libusb编译定义和包含目录 - 静态库
+if(LIBUSB_FOUND)
+    target_include_directories(deepinscan_static PRIVATE ${LIBUSB_INCLUDE_DIRS})
+    target_compile_definitions(deepinscan_static PRIVATE HAVE_LIBUSB)
+endif()
 
 # 包含目录 - 动态库
 target_include_directories(deepinscan

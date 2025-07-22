@@ -9,6 +9,8 @@ set(DEEPINSCAN_GUI_SOURCES
     application.cpp
     mainwindow.cpp
     dialogs/aboutdialog.cpp
+    dialogs/settingsdialog.cpp
+    dialogs/advancedexportdialog.cpp
     # Widget源文件
     widgets/devicelistwidget.cpp
     widgets/scancontrolwidget.cpp

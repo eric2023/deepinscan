@@ -806,6 +806,12 @@ DScannerManager::~DScannerManager()
     qCDebug(dscannerCore) << "DScannerManager destroyed";
 }
 
+// Qt元对象系统需要的虚函数实现
+int DScannerManager::qt_metacall(QMetaObject::Call call, int id, void **arguments)
+{
+    return QObject::qt_metacall(call, id, arguments);
+}
+
 DScannerManager *DScannerManager::instance()
 {
     static DScannerManager *manager = nullptr;
