@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/data">
-        <file>../data/device_database.json</file>
-    </qresource>
-</RCC> 
